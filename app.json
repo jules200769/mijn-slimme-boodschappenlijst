@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Mijn slimme Boodschappenlijst",
+    "slug": "mijn-slimme-boodschappenlijst",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mijnslimmeboodschappenlijst.app"
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "package": "com.mijnslimmeboodschappenlijst.app"
+    },
+    "scheme": "mijn-slimme-boodschappenlijst"
+  }
+}

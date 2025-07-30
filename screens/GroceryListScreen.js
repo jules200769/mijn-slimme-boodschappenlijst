@@ -1,0 +1,2271 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, TextInput, FlatList, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { lists, supabase, sharedLists } from '../lib/supabase';
+import ShareListModal from '../components/ShareListModal';
+import ViewMembersModal from '../components/ViewMembersModal';
+import JoinListModal from '../components/JoinListModal';
+
+// HighlightedText component voor het markeren van zoektermen
+const HighlightedText = ({ text, highlight, style, showHighlight = true }) => {
+  if (!highlight.trim() || !showHighlight) {
+    return <Text style={style}>{text}</Text>;
+  }
+
+  const regex = new RegExp(`(${highlight})`, 'gi');
+  const parts = text.split(regex);
+
+  return (
+    <Text style={style}>
+      {parts.map((part, index) => 
+        regex.test(part) ? (
+          <Text key={index} style={[style, { backgroundColor: '#ffeb3b', fontWeight: 'bold' }]}>
+            {part}
+          </Text>
+        ) : (
+          <Text key={index}>{part}</Text>
+        )
+      )}
+    </Text>
+  );
+};
+
+// Storage keys
+const STORAGE_KEY = 'grocery_lists';
+
+const POPULAIRE_PRODUCTEN = [
+  'Melk', 'Brood', 'Kaas', 'Eieren', 'Appels', 'Bananen', 'Yoghurt', 'Kipfilet', 'Rijst', 'Pasta',
+  'Aardappelen', 'Tomaten', 'Komkommer', 'Paprika', 'Wortels', 'Uien', 'Knoflook', 'Sla', 'Spinazie', 'Courgette',
+  'Aubergine', 'Prei', 'Boontjes', 'Bloemkool', 'Broccoli', 'Spruitjes', 'Champignons', 'Avocado', 'Sinaasappels', 'Mandarijnen',
+  'Peren', 'Druiven', 'Aardbeien', 'Blauwe bessen', 'Frambozen', 'Watermeloen', 'Citroen', 'Limoen', 'Ananas', 'Mango',
+  'Kip', 'Rundergehakt', 'Varkenshaas', 'Zalm', 'Tonijn', 'Garnalen', 'Haring', 'Makreel', 'Kabeljauw', 'Vissticks',
+  'Ham', 'Salami', 'Kipfilet (beleg)', 'Rookworst', 'Boter', 'Margarine', 'Roomkaas', 'Hüttenkäse', 'Crème fraîche', 'Slagroom',
+  'Chocoladepasta', 'Pindakaas', 'Hagelslag', 'Jam', 'Honing', 'Suiker', 'Bloem', 'Bakpoeder', 'Vanillesuiker', 'Zout',
+  'Peper', 'Kruidenmix', 'Olijfolie', 'Zonnebloemolie', 'Azijn', 'Sojasaus', 'Ketchup', 'Mayonaise', 'Mosterd', 'Satésaus',
+  'Chips', 'Nootjes', 'Popcorn', 'Koekjes', 'Ontbijtkoek', 'Muesli', 'Cornflakes', 'Crackers', 'Wasa', 'Beschuit',
+  'Thee', 'Koffie', 'Frisdrank', 'Sinaasappelsap', 'Appelsap', 'Bier', 'Wijn', 'Water', 'IJs', 'Pizza',
+];
+
+const CATEGORIEEN = [
+  { naam: 'ALCOHOLISCHE DRANKEN', emoji: '🍷' },
+  { naam: 'BABY', emoji: '🍼' },
+  { naam: 'BAKKERIJPRODUCTEN', emoji: '🍞' },
+  { naam: 'BAKPRODUCTEN', emoji: '🥧' },
+  { naam: 'BLIKJES EN POTJES', emoji: '🥫' },
+  { naam: 'DIEPVRIESPRODUCTEN', emoji: '❄️' },
+  { naam: 'DRANKEN', emoji: '🥤' },
+  { naam: 'DROGE PRODUCTEN', emoji: '🌾' },
+  { naam: 'ELEKTRONICA', emoji: '💻' },
+  { naam: 'FRUIT EN GROENTEN', emoji: '🍅' },
+  { naam: 'GEZONDHEID', emoji: '💖' },
+  { naam: 'HUISDIEREN', emoji: '🐾' },
+  { naam: 'ZUIVELPRODUCTEN EN EIEREN', emoji: '🧀' },
+  // ... meer categorieën ...
+];
+
+// Voeg een lijst met categorieën toe voor het grid
+const CATEGORIE_GRID = [
+  { naam: 'Fruit', emoji: '🍎' },
+  { naam: 'Groente', emoji: '🥦' },
+  { naam: 'Brood & Bakkerij', emoji: '🍞' },
+  { naam: 'Vlees & Vis', emoji: '🥩' },
+  { naam: 'Zuivel & Eieren', emoji: '🧀' },
+  { naam: 'Dranken', emoji: '🥤' },
+  { naam: 'Snacks & Koek', emoji: '🍪' },
+  { naam: 'Diepvries', emoji: '🧊' },
+  { naam: 'Ontbijtgranen', emoji: '🥣' },
+  { naam: 'Kruiden & Sauzen', emoji: '🧂' },
+  { naam: 'Conserven', emoji: '🥫' },
+  { naam: 'Overig', emoji: '🛒' },
+];
+
+// Voeg bovenaan het bestand een mapping toe van producten naar categorieën:
+const PRODUCT_CATEGORIE_MAPPING = {
+  'Fruit': [
+    'Appels', 'Bananen', 'Sinaasappels', 'Mandarijnen', 'Peren', 'Druiven', 'Aardbeien', 'Blauwe bessen', 'Frambozen', 'Watermeloen', 'Citroen', 'Limoen', 'Ananas', 'Mango',
+  ],
+  'Groente': [
+    'Tomaten', 'Komkommer', 'Paprika', 'Wortels', 'Uien', 'Knoflook', 'Sla', 'Spinazie', 'Courgette', 'Aubergine', 'Prei', 'Boontjes', 'Bloemkool', 'Broccoli', 'Spruitjes', 'Champignons', 'Avocado',
+  ],
+  'Brood & Bakkerij': [
+    'Brood', 'Ontbijtkoek', 'Crackers', 'Wasa', 'Beschuit', 'Muesli', 'Cornflakes',
+  ],
+  'Vlees & Vis': [
+    'Kip', 'Rundergehakt', 'Varkenshaas', 'Zalm', 'Tonijn', 'Garnalen', 'Haring', 'Makreel', 'Kabeljauw', 'Vissticks', 'Ham', 'Salami', 'Kipfilet (beleg)', 'Rookworst',
+  ],
+  'Zuivel & Eieren': [
+    'Melk', 'Kaas', 'Eieren', 'Yoghurt', 'Boter', 'Margarine', 'Roomkaas', 'Hüttenkäse', 'Crème fraîche', 'Slagroom',
+  ],
+  'Dranken': [
+    'Thee', 'Koffie', 'Frisdrank', 'Sinaasappelsap', 'Appelsap', 'Bier', 'Wijn', 'Water',
+  ],
+  'Snacks & Koek': [
+    'Chips', 'Nootjes', 'Popcorn', 'Koekjes', 'Chocoladepasta', 'Pindakaas', 'Hagelslag', 'Jam', 'Honing',
+  ],
+  'Diepvries': [
+    'IJs', 'Pizza',
+  ],
+  'Ontbijtgranen': [
+    'Muesli', 'Cornflakes',
+  ],
+  'Kruiden & Sauzen': [
+    'Peper', 'Kruidenmix', 'Olijfolie', 'Zonnebloemolie', 'Azijn', 'Sojasaus', 'Ketchup', 'Mayonaise', 'Mosterd', 'Satésaus',
+  ],
+  'Conserven': [
+    'Bloem', 'Bakpoeder', 'Vanillesuiker', 'Suiker', 'Zout',
+  ],
+  'Overig': [
+    'Rijst', 'Pasta',
+  ],
+};
+
+export default function GroceryListScreen() {
+  const { user } = useAuth();
+  const [lijsten, setLijsten] = useState([]);
+  const [geselecteerdeLijst, setGeselecteerdeLijst] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [toonProductModal, setToonProductModal] = useState(false);
+  const [nieuweLijstNaam, setNieuweLijstNaam] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedListIds, setSelectedListIds] = useState([]);
+
+    // Laad lijsten bij app start en wanneer gebruiker verandert
+  useEffect(() => {
+    if (user) {
+      loadLijsten();
+      setupRealtimeSubscriptions();
+    } else {
+      setLijsten([]);
+      setGeselecteerdeLijst(null);
+    }
+
+    // Cleanup subscriptions when component unmounts or user changes
+    return () => {
+      cleanupRealtimeSubscriptions();
+    };
+  }, [user]);
+
+  // Real-time subscriptions setup
+  const setupRealtimeSubscriptions = () => {
+    if (!user) return;
+
+    console.log('setupRealtimeSubscriptions: Setting up real-time subscriptions');
+
+    // Subscribe to personal lists changes
+    const personalListsSubscription = supabase
+      .channel('personal-lists')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'lists',
+          filter: `user_id=eq.${user.id}`
+        }, 
+        (payload) => {
+          handleRealtimeUpdate(payload);
+        }
+      )
+      .subscribe();
+
+    // Subscribe to shared lists changes (where user is a member)
+    const sharedListsSubscription = supabase
+      .channel('shared-lists')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'shared_lists'
+        }, 
+        (payload) => {
+          console.log('Real-time: Shared list change:', payload);
+          handleRealtimeUpdate(payload);
+        }
+      )
+      .subscribe();
+
+    // Subscribe to list_members changes (for all lists where user is a member)
+    const listMembersSubscription = supabase
+      .channel('list-members')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'list_members'
+        },
+        (payload) => {
+          console.log('Real-time: List members change:', payload);
+          // Herlaad lijsten en leden bij elke wijziging
+          loadLijsten();
+        }
+      )
+      .subscribe();
+
+    setRealtimeSubscriptions([
+      personalListsSubscription,
+      sharedListsSubscription,
+      listMembersSubscription
+    ]);
+  };
+
+  // Cleanup real-time subscriptions
+  const cleanupRealtimeSubscriptions = () => {
+    console.log('cleanupRealtimeSubscriptions: Cleaning up subscriptions');
+    realtimeSubscriptions.forEach(subscription => {
+      supabase.removeChannel(subscription);
+    });
+    setRealtimeSubscriptions([]);
+  };
+
+  // Handle real-time updates
+  const handleRealtimeUpdate = (payload) => {
+    console.log('handleRealtimeUpdate: Processing update:', payload);
+    
+    if (payload.eventType === 'UPDATE') {
+      const updatedList = payload.new;
+      
+      // Update the lists array
+      setLijsten(prevLists => {
+        const updatedLists = prevLists.map(list => {
+          if (list.id === updatedList.id) {
+            return {
+              ...list,
+              naam: updatedList.name,
+              items: updatedList.items || [],
+              code: updatedList.code
+            };
+          }
+          return list;
+        });
+        return updatedLists;
+      });
+
+      // Update selected list if it's the one that changed
+      if (geselecteerdeLijst && geselecteerdeLijst.id === updatedList.id) {
+        const updatedSelectedList = {
+          ...geselecteerdeLijst,
+          naam: updatedList.name,
+          items: updatedList.items || [],
+          code: updatedList.code
+        };
+        setGeselecteerdeLijst(updatedSelectedList);
+        console.log('Real-time: Updated selected list with', updatedList.items?.length || 0, 'items');
+      }
+    }
+  };
+
+  // Laad lijsten uit Supabase
+  const loadLijsten = async () => {
+    try {
+      if (!user) {
+        console.log('Geen gebruiker ingelogd');
+        setIsLoading(false);
+        return;
+      }
+
+      // Laad persoonlijke lijsten
+      const { data: personalLists, error: personalError } = await lists.getLists(user.id);
+      if (personalError) {
+        console.error('Fout bij laden persoonlijke lijsten:', personalError);
+      }
+
+      // Laad gedeelde lijsten waar gebruiker lid van is
+      let sharedListsData = [];
+      try {
+        const { data, error } = await sharedLists.getUserSharedLists(user.id);
+        if (error) {
+          console.error('Fout bij laden gedeelde lijsten:', error);
+        } else {
+          sharedListsData = data || [];
+        }
+      } catch (error) {
+        console.error('Exception bij laden gedeelde lijsten:', error);
+      }
+
+      // Combineer persoonlijke en gedeelde lijsten
+      const allLists = [];
+      
+      // Voeg persoonlijke lijsten toe
+      if (personalLists) {
+        const personalData = personalLists.map(list => ({
+          id: list.id,
+          naam: list.name,
+          items: list.items || [],
+          type: 'personal'
+        }));
+        allLists.push(...personalData);
+      }
+      
+      // Voeg gedeelde lijsten toe
+      if (sharedListsData && sharedListsData.length > 0) {
+        const sharedData = sharedListsData.map(list => ({
+          id: list.id,
+          naam: list.name,
+          items: list.items || [],
+          code: list.code,
+          type: 'shared'
+        }));
+        allLists.push(...sharedData);
+      }
+
+      console.log('loadLijsten: Loaded', allLists.length, 'lists total');
+      setLijsten(allLists);
+    } catch (error) {
+      console.error('Fout bij laden lijsten:', error);
+      setLijsten([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Maak een nieuwe lijst aan in Supabase
+  const createNieuweLijst = async (lijstData) => {
+    try {
+      if (!user) return;
+
+      // Converteer app formaat naar Supabase formaat
+      const supabaseData = {
+        name: lijstData.naam, // App gebruikt 'naam', Supabase verwacht 'name'
+        items: lijstData.items || []
+      };
+
+      const { data, error } = await lists.createList(user.id, supabaseData);
+      if (error) {
+        console.error('Fout bij aanmaken lijst:', error);
+        Alert.alert('Fout', 'Kon lijst niet aanmaken');
+        return;
+      }
+      
+      console.log('createNieuweLijst: Successfully created list:', data);
+      
+      // Voeg de nieuwe lijst toe aan de lokale state zonder alle lijsten opnieuw te laden
+      const nieuweLijst = {
+        id: data.id,
+        naam: data.name,
+        items: data.items || [],
+        type: 'personal'
+      };
+      
+      setLijsten(prevLists => [...prevLists, nieuweLijst]);
+    } catch (error) {
+      console.error('Fout bij aanmaken lijst:', error);
+      Alert.alert('Fout', 'Kon lijst niet aanmaken');
+    }
+  };
+
+  // Update een lijst in Supabase
+  const updateLijst = async (lijstId, updates) => {
+    try {
+      // Converteer app formaat naar Supabase formaat
+      const supabaseUpdates = {};
+      if (updates.naam) {
+        supabaseUpdates.name = updates.naam; // App gebruikt 'naam', Supabase verwacht 'name'
+      }
+      if (updates.items) {
+        supabaseUpdates.items = updates.items;
+      }
+
+      // Check of dit een gedeelde lijst is
+      const selectedList = lijsten.find(l => l.id === lijstId);
+      if (selectedList && selectedList.code) {
+        console.log('updateLijst: Updating shared list with code:', selectedList.code);
+        
+        // Update gedeelde lijst
+        const { error } = await sharedLists.updateSharedList(selectedList.code, supabaseUpdates);
+        if (error) {
+          console.error('Fout bij updaten gedeelde lijst:', error);
+          Alert.alert('Fout', 'Kon gedeelde lijst niet updaten');
+        }
+      } else {
+        console.log('updateLijst: Updating personal list');
+        
+        // Update persoonlijke lijst
+        const { error } = await lists.updateList(lijstId, supabaseUpdates);
+        if (error) {
+          console.error('Fout bij updaten lijst:', error);
+          Alert.alert('Fout', 'Kon lijst niet updaten');
+        }
+      }
+    } catch (error) {
+      console.error('Fout bij updaten lijst:', error);
+      Alert.alert('Fout', 'Kon lijst niet updaten');
+    }
+  };
+  const [productZoek, setProductZoek] = useState('');
+  const [toonProductDetails, setToonProductDetails] = useState(false);
+  const [bewerkProduct, setBewerkProduct] = useState(null);
+  const [toonCategorieModal, setToonCategorieModal] = useState(false);
+  const [categorieTab, setCategorieTab] = useState('Algemeen');
+  const [filterCategorie, setFilterCategorie] = useState(null);
+  const [toonSorteerModal, setToonSorteerModal] = useState(false);
+  const [sorteerOptie, setSorteerOptie] = useState('Categorieën');
+  const [chronologischChecked, setChronologischChecked] = useState(true);
+  const [toonAfgevinkte, setToonAfgevinkte] = useState(true);
+  const [gekozenCategorie, setGekozenCategorie] = useState(null);
+  const [zoekSuggestie, setZoekSuggestie] = useState('');
+  const [toonZoekResultaten, setToonZoekResultaten] = useState(false);
+  const [toonDuplicaatModal, setToonDuplicaatModal] = useState(false);
+  const [duplicaatProduct, setDuplicaatProduct] = useState(null);
+  
+  // Menu states
+  const [toonMenuModal, setToonMenuModal] = useState(false);
+  const [toonShareModal, setToonShareModal] = useState(false);
+  const [toonViewMembersModal, setToonViewMembersModal] = useState(false);
+  const [toonJoinModal, setToonJoinModal] = useState(false);
+  const [currentListCode, setCurrentListCode] = useState('');
+  const [isListOwner, setIsListOwner] = useState(false);
+  const [toonTestModal, setToonTestModal] = useState(false);
+  const [toonNieuweLijstNaamModal, setToonNieuweLijstNaamModal] = useState(false);
+  const [realtimeSubscriptions, setRealtimeSubscriptions] = useState([]);
+
+  const [productOpslaanLoading, setProductOpslaanLoading] = useState(false);
+  const [productOpslaanFout, setProductOpslaanFout] = useState(null);
+
+  // 1. Voeg een state toe voor de prijsweergave
+  const [toonPrijzen, setToonPrijzen] = useState(false);
+
+  // 2. Nieuwe menu-modal component
+  const [toonNieuwMenuModal, setToonNieuwMenuModal] = useState(false);
+  const [verwijderBevestigingVisible, setVerwijderBevestigingVisible] = useState(false);
+
+  // 3. Functies voor menu-opties
+  const handleAlleItemsDeselecteren = () => {
+    if (!geselecteerdeLijst) return;
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: geselecteerdeLijst.items.map(item => ({ ...item, checked: false }))
+    };
+    updateLijst(geselecteerdeLijst.id, { items: nieuweLijst.items });
+    setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
+    setGeselecteerdeLijst(nieuweLijst);
+    setToonNieuwMenuModal(false);
+  };
+  const handleAlleItemsSelecteren = () => {
+    if (!geselecteerdeLijst) return;
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: geselecteerdeLijst.items.map(item => ({ ...item, checked: true }))
+    };
+    updateLijst(geselecteerdeLijst.id, { items: nieuweLijst.items });
+    setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
+    setGeselecteerdeLijst(nieuweLijst);
+    setToonNieuwMenuModal(false);
+  };
+  const handleVerwijderGekochteArtikelen = () => {
+    if (!geselecteerdeLijst) return;
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: geselecteerdeLijst.items.filter(item => !item.checked)
+    };
+    updateLijst(geselecteerdeLijst.id, { items: nieuweLijst.items });
+    setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
+    setGeselecteerdeLijst(nieuweLijst);
+    setVerwijderBevestigingVisible(false);
+    setToonNieuwMenuModal(false);
+  };
+
+  // Zoeksuggesties genereren
+  const genereerZoekSuggestie = () => {
+    const suggesties = [
+      'Melk', 'Brood', 'Appels', 'Kaas', 'Eieren', 'Bananen', 'Yoghurt', 'Kipfilet', 'Rijst', 'Pasta',
+      'Tomaten', 'Komkommer', 'Paprika', 'Wortels', 'Uien', 'Sla', 'Spinazie', 'Avocado', 'Sinaasappels', 'Druiven'
+    ];
+    const randomSuggestie = suggesties[Math.floor(Math.random() * suggesties.length)];
+    setZoekSuggestie(randomSuggestie);
+  };
+
+  // Zoeksuggestie elke 5 seconden updaten
+  useEffect(() => {
+    if (toonProductModal && !productZoek) {
+      genereerZoekSuggestie();
+      const interval = setInterval(genereerZoekSuggestie, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [toonProductModal, productZoek]);
+
+  // Zoekresultaten filteren
+  const getZoekResultaten = () => {
+    if (!productZoek.trim()) return [];
+    
+    const zoekTerm = productZoek.toLowerCase();
+    
+    // Zoek in producten
+    const alleProducten = Object.values(PRODUCT_CATEGORIE_MAPPING).flat();
+    const gefilterdeProducten = alleProducten.filter(product => 
+      product.toLowerCase().includes(zoekTerm)
+    );
+    
+    // Zoek in categorieën
+    const gefilterdeCategorieen = Object.keys(PRODUCT_CATEGORIE_MAPPING).filter(cat =>
+      cat.toLowerCase().includes(zoekTerm)
+    );
+    
+    // Voeg categorie informatie toe aan producten
+    const productResultaten = gefilterdeProducten.map(product => {
+      const categorie = Object.keys(PRODUCT_CATEGORIE_MAPPING).find(cat => 
+        PRODUCT_CATEGORIE_MAPPING[cat].includes(product)
+      );
+      return { naam: product, categorie, type: 'product' };
+    });
+    
+    // Voeg categorie resultaten toe met emoji
+    const categorieResultaten = gefilterdeCategorieen.map(cat => {
+      const categorieItem = CATEGORIE_GRID.find(item => item.naam === cat);
+      return {
+        naam: cat,
+        categorie: cat,
+        type: 'categorie',
+        emoji: categorieItem ? categorieItem.emoji : '📁'
+      };
+    });
+    
+    // Eerst producten, dan categorieën
+    return [...productResultaten, ...categorieResultaten];
+  };
+
+  // Check of product al bestaat
+  const checkProductDuplicaat = (productNaam) => {
+    if (!geselecteerdeLijst) return false;
+    return geselecteerdeLijst.items.find(item => 
+      item.naam.toLowerCase() === productNaam.toLowerCase()
+    );
+  };
+
+  // Bepaal categorie voor een product
+  const getProductCategorie = (productNaam) => {
+    const naam = productNaam.toLowerCase();
+    
+    // Fruit
+    if (['appels', 'bananen', 'sinaasappels', 'mandarijnen', 'peren', 'druiven', 'aardbeien', 'blauwe bessen', 'frambozen', 'watermeloen', 'citroen', 'limoen', 'ananas', 'mango'].includes(naam)) {
+      return { categorie: 'Fruit', emoji: '🍎' };
+    }
+    
+    // Groente
+    if (['tomaten', 'komkommer', 'paprika', 'wortels', 'uien', 'knoflook', 'sla', 'spinazie', 'courgette', 'aubergine', 'prei', 'boontjes', 'bloemkool', 'broccoli', 'spruitjes', 'champignons', 'avocado'].includes(naam)) {
+      return { categorie: 'Groente', emoji: '🥦' };
+    }
+    
+    // Brood & Bakkerij
+    if (['brood', 'ontbijtkoek', 'crackers', 'wasa', 'beschuit', 'muesli', 'cornflakes'].includes(naam)) {
+      return { categorie: 'Brood & Bakkerij', emoji: '🍞' };
+    }
+    
+    // Vlees & Vis
+    if (['kip', 'rundergehakt', 'varkenshaas', 'zalm', 'tonijn', 'garnalen', 'haring', 'makreel', 'kabeljauw', 'vissticks', 'ham', 'salami', 'kipfilet (beleg)', 'rookworst'].includes(naam)) {
+      return { categorie: 'Vlees & Vis', emoji: '🥩' };
+    }
+    
+    // Zuivel & Eieren
+    if (['melk', 'kaas', 'eieren', 'yoghurt', 'boter', 'margarine', 'roomkaas', 'hüttenkäse', 'crème fraîche', 'slagroom'].includes(naam)) {
+      return { categorie: 'Zuivel & Eieren', emoji: '🧀' };
+    }
+    
+    // Dranken
+    if (['thee', 'koffie', 'frisdrank', 'sinaasappelsap', 'appelsap', 'bier', 'wijn', 'water'].includes(naam)) {
+      return { categorie: 'Dranken', emoji: '🥤' };
+    }
+    
+    // Snacks & Koek
+    if (['chips', 'nootjes', 'popcorn', 'koekjes', 'chocoladepasta', 'pindakaas', 'hagelslag', 'jam', 'honing'].includes(naam)) {
+      return { categorie: 'Snacks & Koek', emoji: '🍪' };
+    }
+    
+    // Diepvries
+    if (['ijs', 'pizza'].includes(naam)) {
+      return { categorie: 'Diepvries', emoji: '🧊' };
+    }
+    
+    // Ontbijtgranen
+    if (['muesli', 'cornflakes'].includes(naam)) {
+      return { categorie: 'Ontbijtgranen', emoji: '🥣' };
+    }
+    
+    // Kruiden & Sauzen
+    if (['peper', 'kruidenmix', 'olijfolie', 'zonnebloemolie', 'azijn', 'sojasaus', 'ketchup', 'mayonaise', 'mosterd', 'satésaus'].includes(naam)) {
+      return { categorie: 'Kruiden & Sauzen', emoji: '🧂' };
+    }
+    
+    // Conserven
+    if (['bloem', 'bakpoeder', 'vanillesuiker', 'suiker', 'zout', 'rijst', 'pasta'].includes(naam)) {
+      return { categorie: 'Conserven', emoji: '🥫' };
+    }
+    
+    // Standaard
+    return { categorie: 'Overig', emoji: '🛒' };
+  };
+
+  // Product toevoegen
+  const handleProductToevoegen = async (productNaam) => {
+    if (!geselecteerdeLijst) return;
+    // Check of product al bestaat in de lijst
+    const bestaandProduct = checkProductDuplicaat(productNaam);
+    if (bestaandProduct) {
+      setDuplicaatProduct(productNaam);
+      setToonDuplicaatModal(true);
+    } else {
+      const { categorie, emoji } = getProductCategorie(productNaam);
+      const nieuweProduct = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+        naam: productNaam,
+        checked: false,
+        hoeveelheid: '1',
+        eenheid: 'stuks',
+        categorie: categorie,
+        categorieEmoji: emoji,
+      };
+      const nieuweLijst = {
+        ...geselecteerdeLijst,
+        items: [...geselecteerdeLijst.items, nieuweProduct]
+      };
+      // Update in Supabase
+      let error = null;
+      if (geselecteerdeLijst.code) {
+        // Gedeelde lijst
+        ({ error } = await sharedLists.updateSharedList(geselecteerdeLijst.code, { items: nieuweLijst.items }));
+      } else {
+        // Persoonlijke lijst
+        ({ error } = await lists.updateList(geselecteerdeLijst.id, { items: nieuweLijst.items }));
+      }
+      if (!error) {
+        // Update lokale state alleen bij succes
+        const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
+        setLijsten(nieuweLijsten);
+        setGeselecteerdeLijst(nieuweLijst);
+        setToonProductModal(false);
+      } else {
+        Alert.alert('Fout', 'Kon product niet toevoegen');
+      }
+    }
+  };
+
+  // Product afvinken
+  const handleProductToggle = async (productId) => {
+    if (!geselecteerdeLijst) return;
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: geselecteerdeLijst.items.map(item =>
+        item.id === productId ? { ...item, checked: !item.checked } : item
+      )
+    };
+    let error = null;
+    if (geselecteerdeLijst.code) {
+      ({ error } = await sharedLists.updateSharedList(geselecteerdeLijst.code, { items: nieuweLijst.items }));
+    } else {
+      ({ error } = await lists.updateList(geselecteerdeLijst.id, { items: nieuweLijst.items }));
+    }
+    if (!error) {
+      const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
+      setLijsten(nieuweLijsten);
+      setGeselecteerdeLijst(nieuweLijst);
+    } else {
+      Alert.alert('Fout', 'Kon product niet afvinken');
+    }
+  };
+
+  // Product verwijderen
+  const handleProductVerwijderen = async (productId) => {
+    if (!geselecteerdeLijst) return;
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: geselecteerdeLijst.items.filter(item => item.id !== productId)
+    };
+    let error = null;
+    if (geselecteerdeLijst.code) {
+      ({ error } = await sharedLists.updateSharedList(geselecteerdeLijst.code, { items: nieuweLijst.items }));
+    } else {
+      ({ error } = await lists.updateList(geselecteerdeLijst.id, { items: nieuweLijst.items }));
+    }
+    if (!error) {
+      const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
+      setLijsten(nieuweLijsten);
+      setGeselecteerdeLijst(nieuweLijst);
+    } else {
+      Alert.alert('Fout', 'Kon product niet verwijderen');
+    }
+  };
+
+  // Lijst verwijderen
+  const handleLijstVerwijderen = async (lijst) => {
+    Alert.alert(
+      'Lijst verwijderen',
+      `Weet je zeker dat je "${lijst.naam}" wilt verwijderen?`,
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        { 
+          text: 'Verwijderen', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Check of dit een gedeelde lijst is
+              if (lijst.code) {
+                // Haal leden op
+                const { data: leden, error: ledenError } = await sharedLists.getListMembers(lijst.code);
+                if (!ledenError && leden && leden.length === 0 && lijst.created_by === user.id) {
+                  // Geen leden en eigenaar: verwijder uit shared_lists
+                  await sharedLists.deleteSharedList(lijst.code, user.id);
+                } else {
+                // Verlaat de gedeelde lijst (verwijder uit list_members)
+                const { error: leaveError } = await sharedLists.removeListMember(lijst.code, user.id, user.id);
+                if (leaveError) {
+                  console.error('Fout bij verlaten gedeelde lijst:', leaveError);
+                  Alert.alert('Fout', 'Kon gedeelde lijst niet verlaten');
+                  return;
+                }
+                }
+            } else {
+                // Persoonlijke lijst
+                await lists.deleteList(lijst.id);
+              }
+              // Update lokale state
+              setLijsten(lijsten.filter(l => l.id !== lijst.id));
+                setGeselecteerdeLijst(null);
+            } catch (error) {
+              console.error('Fout bij verwijderen lijst:', error);
+              Alert.alert('Fout', 'Kon lijst niet verwijderen');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Menu functies
+  const handleMenuOpen = () => {
+    setToonMenuModal(true);
+  };
+
+  const handleShareList = () => {
+    setToonMenuModal(false);
+    setToonShareModal(true);
+  };
+
+  const handleViewMembers = async () => {
+    setToonMenuModal(false);
+    
+    // Check of dit een gedeelde lijst is
+    if (!geselecteerdeLijst.code) {
+      Alert.alert('Fout', 'Deze lijst is niet gedeeld.');
+      return;
+    }
+    
+    console.log('handleViewMembers: Gedeelde lijst code:', geselecteerdeLijst.code);
+    
+    // Check of gebruiker de eigenaar is
+    const isOwner = geselecteerdeLijst.created_by === user.id;
+    
+    setCurrentListCode(geselecteerdeLijst.code);
+    setIsListOwner(isOwner);
+    setToonViewMembersModal(true);
+  };
+
+  const handleDeleteList = () => {
+    setToonMenuModal(false);
+    handleLijstVerwijderen(geselecteerdeLijst);
+  };
+
+  const handleJoinList = () => {
+    setToonJoinModal(true);
+  };
+
+  // Nieuwe lijst maken
+  const handleNieuweLijst = async () => {
+    setNieuweLijstNaam('');
+    setToonNieuweLijstNaamModal(true);
+  };
+
+  const handleNieuweLijstAanmaken = () => {
+    handleNieuweLijst();
+  };
+
+    const bevestigNieuweLijst = async () => {
+    if (!nieuweLijstNaam.trim()) {
+      // Als er geen naam is ingevoerd, gebruik een standaard naam
+      const standaardNaam = `Nieuwe lijst ${lijsten.length + 1}`;
+      await createNieuweLijst({
+        naam: standaardNaam,
+        items: []
+      });
+      setToonNieuweLijstNaamModal(false);
+      return;
+    }
+    
+    await createNieuweLijst({
+      naam: nieuweLijstNaam.trim(),
+      items: []
+    });
+    setToonNieuweLijstNaamModal(false);
+  };
+
+  // Productdetails openen
+  const handleProductDetails = (product) => {
+    setBewerkProduct({ ...product });
+    setToonProductDetails(true);
+  };
+
+  // Productdetails opslaan
+  const handleProductDetailsOpslaan = async () => {
+    if (!geselecteerdeLijst || !bewerkProduct) return;
+    setProductOpslaanLoading(true);
+    setProductOpslaanFout(null);
+    try {
+      const nieuweLijst = {
+        ...geselecteerdeLijst,
+        items: geselecteerdeLijst.items.map(item =>
+          item.id === bewerkProduct.id ? { ...bewerkProduct } : item
+        )
+      };
+      // Update in Supabase
+      await updateLijst(geselecteerdeLijst.id, {
+        items: nieuweLijst.items
+      });
+      // Update lokale state
+      setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
+      setGeselecteerdeLijst(nieuweLijst);
+      setToonProductDetails(false);
+    } catch (error) {
+      setProductOpslaanFout('Er is iets misgegaan bij het opslaan. Probeer het opnieuw.');
+      console.error('Fout bij opslaan product:', error);
+    } finally {
+      setProductOpslaanLoading(false);
+    }
+  };
+
+  // Categorie wijzigen
+  const handleCategorieWijzigen = async (cat) => {
+    if (bewerkProduct) {
+      // Update in details-modal of direct vanuit productrij
+      const nieuweProduct = { ...bewerkProduct, categorie: cat.naam, categorieEmoji: cat.emoji };
+      const nieuweLijst = {
+        ...geselecteerdeLijst,
+        items: geselecteerdeLijst.items.map(item =>
+          item.id === nieuweProduct.id ? nieuweProduct : item
+        )
+      };
+      
+      // Update in Supabase
+      await updateLijst(geselecteerdeLijst.id, {
+        items: nieuweLijst.items
+      });
+      
+      // Update lokale state
+      setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
+      setGeselecteerdeLijst(nieuweLijst);
+      setBewerkProduct(nieuweProduct);
+    }
+    setToonCategorieModal(false);
+  };
+
+  // Sorteer producten op basis van sorteerOptie
+  const getSortedProducten = () => {
+    let items = [...geselecteerdeLijst.items];
+    if (sorteerOptie === 'Categorieën') {
+      items.sort((a, b) => (a.categorie || '').localeCompare(b.categorie || ''));
+    } else if (sorteerOptie === 'Alfabetisch') {
+      items.sort((a, b) => (a.naam || '').localeCompare(b.naam || ''));
+    }
+    const nietAfgevinkt = items.filter(p => !p.checked);
+    const afgevinkt = items.filter(p => p.checked);
+    if (toonAfgevinkte) {
+      return [...nietAfgevinkt, ...afgevinkt];
+    } else {
+      return nietAfgevinkt;
+    }
+  };
+
+  // Groepeer producten per categorie voor weergave
+  const getGegroepeerdeProducten = () => {
+    const items = getSortedProducten();
+    
+    if (sorteerOptie !== 'Categorieën') {
+      return items; // Geen groepering voor andere sorteeropties
+    }
+
+    const groepen = {};
+    items.forEach(item => {
+      const categorie = item.categorie || 'Overig';
+      if (!groepen[categorie]) {
+        groepen[categorie] = [];
+      }
+      groepen[categorie].push(item);
+    });
+
+    // Behoud originele volgorde binnen categorieën
+    // Geen alfabetische sortering, gewoon groeperen per categorie
+
+    // Converteer naar array met categorie headers
+    const resultaat = [];
+    Object.keys(groepen).forEach(categorie => {
+      resultaat.push({ type: 'header', categorie, items: groepen[categorie] });
+      resultaat.push(...groepen[categorie].map(item => ({ ...item, type: 'item' })));
+    });
+
+    return resultaat;
+  };
+
+  // Render lijst card
+  const renderLijst = ({ item }) => {
+    const checkedItems = item.items.filter(item => item.checked).length;
+    const totalItems = item.items.length;
+    const isSelected = selectedListIds.includes(item.id);
+    return (
+      <TouchableOpacity 
+        style={styles.lijstCard} 
+        onPress={() => {
+          if (selectMode) {
+            // Toggle selectie
+            setSelectedListIds(prev =>
+              prev.includes(item.id)
+                ? prev.filter(id => id !== item.id)
+                : [...prev, item.id]
+            );
+          } else {
+            setGeselecteerdeLijst(item);
+          }
+        }}
+      >
+        <View style={styles.lijstCardHeader}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {selectMode && (
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedListIds(prev =>
+                    prev.includes(item.id)
+                      ? prev.filter(id => id !== item.id)
+                      : [...prev, item.id]
+                  );
+                }}
+                style={{ marginRight: 12 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialCommunityIcons
+                  name={isSelected ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
+                  size={26}
+                  color={isSelected ? '#1976d2' : '#bbb'}
+                />
+              </TouchableOpacity>
+            )}
+          <Text style={styles.lijstCardTitle}>{item.naam}</Text>
+          </View>
+          <TouchableOpacity 
+            onPress={(e) => {
+              e.stopPropagation(); // Voorkom dat de lijst wordt geselecteerd
+              handleLijstVerwijderen(item);
+            }}
+            style={styles.lijstCardMenu}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Groter touch area
+          >
+            <MaterialCommunityIcons name="delete" size={24} color="#e53935" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.lijstCardProgress}>
+          <View style={[styles.lijstCardProgressBar, { width: `${totalItems > 0 ? (checkedItems / totalItems) * 100 : 0}%` }]} />
+        </View>
+        <Text style={styles.lijstCardSubtitle}>
+          {checkedItems} van {totalItems} producten afgevinkt
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  // Render product row
+  const renderProduct = ({ item }) => {
+    if (filterCategorie && item.categorie !== filterCategorie) return null;
+    
+    // Render categorie header
+    if (item.type === 'header') {
+    return (
+        <View style={{
+          backgroundColor: '#f5f5f5',
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          marginTop: 16,
+          marginBottom: 8,
+          borderRadius: 8,
+        }}>
+          <Text style={{
+            fontWeight: 'bold',
+            fontSize: 16,
+            color: '#666',
+            textTransform: 'uppercase',
+          }}>
+            {item.categorie} ({item.items.length})
+          </Text>
+        </View>
+      );
+    }
+    
+    // Render normaal product
+    return (
+      <View style={[styles.productRow, item.checked && styles.productRowChecked]}>
+        <TouchableOpacity 
+          onPress={() => handleProductToggle(item.id)}
+          style={styles.productCheckbox}
+        >
+          <MaterialCommunityIcons 
+            name={item.checked ? "check-circle" : "checkbox-blank-circle-outline"} 
+            size={28} 
+            color={item.checked ? "#4caf50" : "#bbb"} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.productInfo} onPress={() => handleProductDetails(item)}>
+          <Text style={[styles.productNaam, item.checked && styles.productNaamChecked]}>
+            {item.naam}
+          </Text>
+          <Text style={styles.productDetails}>
+            {item.hoeveelheid} {item.eenheid}
+          </Text>
+          {item.notitie ? (
+            <Text style={[styles.productDetails, { color: '#888', fontStyle: 'italic' }]} numberOfLines={2}>
+              {item.notitie}
+            </Text>
+          ) : null}
+          {item.prijs ? (
+            <Text style={[styles.productDetails, { color: '#4caf50', fontWeight: 'bold' }]}> 
+              € {parseFloat(item.prijs).toFixed(2)}
+              {item.hoeveelheid && !isNaN(parseFloat(item.hoeveelheid)) ? ` | Totaal: € ${(parseFloat(item.prijs) * parseFloat(item.hoeveelheid)).toFixed(2)}` : ''}
+            </Text>
+          ) : null}
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { setBewerkProduct({ ...item }); setToonCategorieModal(true); }}>
+          <Text style={{ fontSize: 28, marginLeft: 8 }}>{item.categorieEmoji || '🏷️'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => handleProductVerwijderen(item.id)}
+          style={styles.productDelete}
+        >
+          <MaterialCommunityIcons name="delete" size={24} color="#e53935" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // Voeg een stille verwijderfunctie toe voor bulk delete:
+  const deleteLijstDirect = async (lijst) => {
+    try {
+      if (lijst.code) {
+        const { data: leden, error: ledenError } = await sharedLists.getListMembers(lijst.code);
+        if (!ledenError && leden && leden.length === 0 && lijst.created_by === user.id) {
+          await sharedLists.deleteSharedList(lijst.code, user.id);
+        } else {
+          await sharedLists.removeListMember(lijst.code, user.id, user.id);
+        }
+      } else {
+        await lists.deleteList(lijst.id);
+      }
+    } catch (error) {
+      // Fout bij verwijderen, eventueel loggen
+    }
+  };
+
+  const handleBulkVerwijderLijsten = async () => {
+    // Verwijder direct uit de state
+    setLijsten(prev => prev.filter(l => !selectedListIds.includes(l.id)));
+    // Verwijder uit de database
+    for (const lijstId of selectedListIds) {
+      const lijst = lijsten.find(l => l.id === lijstId);
+      if (lijst) {
+        await deleteLijstDirect(lijst);
+      }
+    }
+    setSelectedListIds([]);
+    setSelectMode(false);
+  };
+
+  // Hoofdscherm - lijsten overzicht
+  if (geselecteerdeLijst == null) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {geselecteerdeLijst == null ? (
+          <>
+                    <View style={styles.header}>
+          <Text style={styles.title}>Mijn lijsten</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {selectMode && selectedListIds.length > 0 && (
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    'Lijsten verwijderen',
+                    `Weet je zeker dat je ${selectedListIds.length} lijst(en) wilt verwijderen?`,
+                    [
+                      { text: 'Annuleren', style: 'cancel' },
+                      {
+                        text: 'Verwijderen', style: 'destructive', onPress: handleBulkVerwijderLijsten }
+                    ]
+                  );
+                }}
+                style={{ marginRight: 18 }}
+              >
+                <MaterialCommunityIcons name="trash-can-outline" size={26} color="#e53935" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => setSelectMode(!selectMode)}>
+              <Text style={{ color: '#1976d2', fontWeight: 'bold', fontSize: 16 }}>
+                {selectMode ? 'Annuleren' : 'Selecteren'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+            {lijsten.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>Nog geen lijsten</Text>
+                <TouchableOpacity style={styles.addButton} onPress={handleNieuweLijst}>
+                  <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                  <Text style={styles.addButtonText}>NIEUWE LIJST</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.addButton, { backgroundColor: '#f5f5f5', marginTop: 16 }]} onPress={() => setToonJoinModal(true)}>
+                  <MaterialCommunityIcons name="account-plus" size={24} color="#4caf50" />
+                  <Text style={[styles.addButtonText, { color: '#4caf50' }]}>JOIN LIJST</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <FlatList
+                  data={lijsten}
+                  renderItem={renderLijst}
+                  keyExtractor={item => item.id}
+                  contentContainerStyle={styles.lijstenList}
+                />
+                <TouchableOpacity style={styles.floatingAddButton} onPress={handleNieuweLijst}>
+                  <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                  <Text style={styles.addButtonText}>NIEUWE LIJST</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.floatingAddButton, { bottom: 20, backgroundColor: '#f5f5f5' }]} onPress={() => setToonJoinModal(true)}>
+                  <MaterialCommunityIcons name="account-plus" size={24} color="#4caf50" />
+                  <Text style={[styles.addButtonText, { color: '#4caf50' }]}>JOIN LIJST</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setGeselecteerdeLijst(null)}>
+            <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+          </TouchableOpacity>
+              <Text style={styles.title}>{geselecteerdeLijst.naam}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => setToonSorteerModal(true)} style={{ marginRight: 8 }}>
+                  <MaterialCommunityIcons name="filter-variant" size={28} color="#4caf50" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setToonNieuwMenuModal(true)} style={{ marginLeft: 8 }}>
+                  <MaterialCommunityIcons name="dots-vertical" size={28} color="#333" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            {geselecteerdeLijst.items.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>Nog geen producten</Text>
+            <TouchableOpacity style={styles.addButton} onPress={() => setToonProductModal(true)}>
+              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                  <Text style={styles.addButtonText}>PRODUCT TOEVOEGEN</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+              <>
+            <FlatList
+                  data={getGegroepeerdeProducten()}
+                  renderItem={renderProduct}
+                  keyExtractor={item => item.type === 'header' ? `header-${item.categorie}` : item.id}
+                  contentContainerStyle={styles.productenList}
+                />
+              </>
+            )}
+            {geselecteerdeLijst.items.some(p => p.checked) && (
+              <View style={{ alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
+                {toonAfgevinkte ? (
+                  <TouchableOpacity onPress={() => setToonAfgevinkte(false)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+                    <MaterialCommunityIcons name="eye-off-outline" size={22} color="#888" style={{ marginRight: 6 }} />
+                    <Text style={{ color: '#888', fontWeight: 'bold' }}>Verberg afgevinkte producten</Text>
+      </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={() => setToonAfgevinkte(true)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+                    <MaterialCommunityIcons name="eye-outline" size={22} color="#4caf50" style={{ marginRight: 6 }} />
+                    <Text style={{ color: '#4caf50', fontWeight: 'bold' }}>Toon afgevinkte producten</Text>
+          </TouchableOpacity>
+              )}
+              </View>
+            )}
+            {geselecteerdeLijst.items.length > 0 && (
+              <TouchableOpacity 
+                style={styles.floatingAddButton} 
+                onPress={() => {
+                  setToonProductModal(true);
+                  setGekozenCategorie(null);
+                  setProductZoek('');
+                  setToonZoekResultaten(false);
+                  setToonDuplicaatModal(false); // Reset duplicaat modal
+                }}
+              >
+                <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                <Text style={styles.addButtonText}>TOEVOEGEN</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+        {/* --- MODALS ALTIJD HIERONDER --- */}
+        <JoinListModal
+          visible={toonJoinModal}
+          onClose={() => setToonJoinModal(false)}
+          onJoinSuccess={loadLijsten}
+        />
+        
+        {/* Nieuwe Lijst Naam Modal */}
+        <Modal
+          visible={toonNieuweLijstNaamModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setToonNieuweLijstNaamModal(false)}
+        >
+          <View style={[styles.modalOverlay, { justifyContent: 'center', alignItems: 'center' }]}>
+            <View style={{
+              backgroundColor: '#fff',
+              borderRadius: 20,
+              padding: 24,
+              margin: 20,
+              width: '90%',
+              maxWidth: 400,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+              elevation: 8,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#333' }}>Nieuwe lijst</Text>
+                <TouchableOpacity onPress={() => setToonNieuweLijstNaamModal(false)}>
+                  <MaterialCommunityIcons name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={{ fontSize: 16, color: '#666', marginBottom: 16 }}>
+                Geef je nieuwe lijst een naam:
+              </Text>
+              
+              <TextInput
+                style={{
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: 12,
+                  padding: 16,
+                  fontSize: 16,
+                  marginBottom: 24,
+                  borderWidth: 1,
+                  borderColor: '#e0e0e0',
+                }}
+                placeholder="Bijv. Boodschappen, Feestje, etc."
+                value={nieuweLijstNaam}
+                onChangeText={setNieuweLijstNaam}
+                autoFocus
+                onSubmitEditing={bevestigNieuweLijst}
+                returnKeyType="done"
+              />
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+                <TouchableOpacity 
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: 12,
+                    paddingVertical: 14,
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setToonNieuweLijstNaamModal(false)}
+                >
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#666' }}>
+                    Annuleren
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#4caf50',
+                    borderRadius: 12,
+                    paddingVertical: 14,
+                    alignItems: 'center',
+                  }}
+                  onPress={bevestigNieuweLijst}
+                >
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>
+                    Aanmaken
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    );
+  }
+
+  // Detailscherm - producten in lijst
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setGeselecteerdeLijst(null)}>
+          <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.title}>{geselecteerdeLijst.naam}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setToonSorteerModal(true)} style={{ marginRight: 8 }}>
+            <MaterialCommunityIcons name="filter-variant" size={28} color="#4caf50" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setToonNieuwMenuModal(true)} style={{ marginLeft: 8 }}>
+            <MaterialCommunityIcons name="dots-vertical" size={28} color="#333" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {geselecteerdeLijst.items.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>Nog geen producten</Text>
+            <TouchableOpacity style={styles.addButton} onPress={() => setToonProductModal(true)}>
+              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+            <Text style={styles.addButtonText}>PRODUCT TOEVOEGEN</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+                      <FlatList
+                  data={getGegroepeerdeProducten()}
+                  renderItem={renderProduct}
+                  keyExtractor={item => item.type === 'header' ? `header-${item.categorie}` : item.id}
+                  contentContainerStyle={styles.productenList}
+                />
+        </>
+      )}
+
+      {geselecteerdeLijst.items.some(p => p.checked) && (
+        <View style={{ alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
+          {toonAfgevinkte ? (
+            <TouchableOpacity onPress={() => setToonAfgevinkte(false)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+              <MaterialCommunityIcons name="eye-off-outline" size={22} color="#888" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#888', fontWeight: 'bold' }}>Verberg afgevinkte producten</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setToonAfgevinkte(true)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+              <MaterialCommunityIcons name="eye-outline" size={22} color="#4caf50" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#4caf50', fontWeight: 'bold' }}>Toon afgevinkte producten</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {geselecteerdeLijst.items.length > 0 && (
+        <TouchableOpacity 
+          style={styles.floatingAddButton} 
+          onPress={() => {
+            setToonProductModal(true);
+            setGekozenCategorie(null);
+            setProductZoek('');
+            setToonZoekResultaten(false);
+            setToonDuplicaatModal(false); // Reset duplicaat modal
+          }}
+        >
+          <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+          <Text style={styles.addButtonText}>TOEVOEGEN</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Product toevoegen modal */}
+        <Modal
+          visible={toonProductModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setToonProductModal(false)}
+        >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setToonProductModal(false)}>
+                <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Product toevoegen</Text>
+              <View style={{ width: 28 }} />
+            </View>
+
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#222' }}>Stel jouw lijstje samen</Text>
+            </View>
+
+            <View style={{ position: 'relative' }}>
+                <TextInput
+                style={[styles.searchInput, { paddingRight: 40 }]}
+                placeholder={productZoek ? "Zoek producten..." : `Zoek producten... (bijv. ${zoekSuggestie})`}
+                placeholderTextColor={productZoek ? "#bbb" : "#999"}
+                  value={productZoek}
+                onChangeText={(text) => {
+                  setProductZoek(text);
+                  setToonZoekResultaten(text.length > 0);
+                  if (text.length > 0) {
+                    setGekozenCategorie(null);
+                  }
+                }}
+                onFocus={() => {
+                  if (productZoek.length > 0) {
+                    setToonZoekResultaten(true);
+                  }
+                }}
+              />
+              {productZoek.length > 0 && (
+                <TouchableOpacity 
+                  style={{ position: 'absolute', right: 12, top: 16 }}
+                  onPress={() => {
+                    setProductZoek('');
+                    setToonZoekResultaten(false);
+                  }}
+                >
+                  <MaterialCommunityIcons name="close" size={20} color="#bbb" />
+                </TouchableOpacity>
+              )}
+              </View>
+
+            {/* Zoekresultaten tonen wanneer er getypt wordt */}
+            {toonZoekResultaten && productZoek.length > 0 && (
+              <View style={{ flex: 1, marginBottom: 16 }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#222', marginBottom: 8 }}>
+                  Zoekresultaten ({getZoekResultaten().length})
+                </Text>
+                                {(() => {
+                  const resultaten = getZoekResultaten();
+                  const showHighlighting = resultaten.length > 1;
+  return (
+                    <FlatList
+                      data={resultaten}
+                      renderItem={({ item }) => (
+          <TouchableOpacity 
+                          style={[
+                            item.type === 'categorie' 
+                              ? {
+                                  backgroundColor: '#f5f5f5',
+                                  borderRadius: 16,
+                                  padding: 20,
+                                  marginBottom: 12,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  elevation: 3,
+                                  shadowColor: '#000',
+                                  shadowOffset: { width: 0, height: 2 },
+                                  shadowOpacity: 0.1,
+                                  shadowRadius: 4,
+                                }
+                              : [styles.productOption, { backgroundColor: '#f9f9f9' }]
+                          ]}
+                                                  onPress={() => {
+                          if (item.type === 'categorie') {
+                            setGekozenCategorie(item.naam);
+                            setProductZoek('');
+                            setToonZoekResultaten(false);
+                          } else {
+                            // Check duplicaat voordat we toevoegen
+                            const bestaandProduct = checkProductDuplicaat(item.naam);
+                            if (bestaandProduct) {
+                              setDuplicaatProduct(item.naam);
+                              setToonDuplicaatModal(true);
+                              setProductZoek('');
+                              setToonZoekResultaten(false);
+                            } else {
+                              handleProductToevoegen(item.naam);
+                              setProductZoek('');
+                              setToonZoekResultaten(false);
+                            }
+                          }
+                        }}
+                        >
+                          {item.type === 'categorie' ? (
+                            <>
+                              <Text style={{ fontSize: 48, marginRight: 16 }}>{item.emoji}</Text>
+                              <View style={{ flex: 1 }}>
+                                <HighlightedText 
+                                  text={item.naam}
+                                  highlight={productZoek}
+                                  style={{ fontWeight: 'bold', fontSize: 18, color: '#222', marginBottom: 4 }}
+                                  showHighlight={showHighlighting}
+                                />
+                                <Text style={{ fontSize: 14, color: '#888' }}>
+                                  Bekijk alle producten in deze categorie
+                                </Text>
+                              </View>
+                              <MaterialCommunityIcons name="chevron-right" size={24} color="#888" />
+                            </>
+                          ) : (
+                            <>
+                              <MaterialCommunityIcons name="plus" size={24} color="#4caf50" />
+                              <View style={{ flex: 1 }}>
+                                <HighlightedText 
+                                  text={item.naam}
+                                  highlight={productZoek}
+                                  style={styles.productOptionText}
+                                  showHighlight={showHighlighting}
+                                />
+                              </View>
+                              <Text style={{ fontSize: 12, color: '#888', backgroundColor: '#e8f5e8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+                                {item.categorie}
+                              </Text>
+                            </>
+                          )}
+            </TouchableOpacity>
+                      )}
+                      keyExtractor={item => `${item.type}-${item.naam}`}
+                      style={{ flex: 1 }}
+                    />
+                  );
+                })()}
+              </View>
+            )}
+
+            {/* In de Product toevoegen modal, onder de zoekbalk, toon het grid als er geen categorie gekozen is */}
+            {!gekozenCategorie && !toonZoekResultaten && (
+              <View style={{ flex: 1 }}>
+                <FlatList
+                  data={CATEGORIE_GRID}
+                  numColumns={2}
+                  keyExtractor={item => item.naam}
+                  contentContainerStyle={{ paddingVertical: 8 }}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={{
+                        flex: 1,
+                        margin: 8,
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 18,
+                        minHeight: 100,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        elevation: 2,
+                      }}
+                      onPress={() => setGekozenCategorie(item.naam)}
+                    >
+                      <Text style={{ fontSize: 48, marginBottom: 8 }}>{item.emoji}</Text>
+                      <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#222' }}>{item.naam}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+
+            {gekozenCategorie && (
+              <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <TouchableOpacity onPress={() => setGekozenCategorie(null)} style={{ marginRight: 8 }}>
+                    <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+              </TouchableOpacity>
+                  <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#222' }}>{gekozenCategorie}</Text>
+        </View>
+                <View style={{ flex: 1 }}>
+                  <FlatList
+                    data={(PRODUCT_CATEGORIE_MAPPING[gekozenCategorie] || []).filter(p => p.toLowerCase().includes(productZoek.toLowerCase()))}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity 
+                        style={styles.productOption}
+                        onPress={() => {
+                          // Check duplicaat voordat we toevoegen
+                          const bestaandProduct = checkProductDuplicaat(item);
+                          if (bestaandProduct) {
+                            setDuplicaatProduct(item);
+                            setToonDuplicaatModal(true);
+                            setToonProductModal(false); // Sluit product modal
+                          } else {
+                            handleProductToevoegen(item);
+                          }
+                        }}
+                      >
+                        <MaterialCommunityIcons name="plus" size={24} color="#888" />
+                        <Text style={styles.productOptionText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                    keyExtractor={item => item}
+                  />
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+        </Modal>
+
+      {/* Product details modal */}
+        <Modal
+          visible={toonProductDetails}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setToonProductDetails(false)}
+        >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalContent, { backgroundColor: '#fdf6f0' }]}> 
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{ width: 40, height: 4, backgroundColor: '#ddd', borderRadius: 2, marginBottom: 4 }} />
+                <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Details</Text>
+          </View>
+              <TouchableOpacity onPress={handleProductDetailsOpslaan} disabled={productOpslaanLoading}>
+                <Text style={{ color: productOpslaanLoading ? '#aaa' : '#2196f3', fontWeight: 'bold', fontSize: 16 }}>Klaar</Text>
+              </TouchableOpacity>
+            </View>
+            {productOpslaanFout && (
+              <Text style={{ color: 'red', marginBottom: 8 }}>{productOpslaanFout}</Text>
+            )}
+            {productOpslaanLoading && (
+              <Text style={{ color: '#2196f3', marginBottom: 8 }}>Even geduld...</Text>
+            )}
+            {bewerkProduct && (
+              <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <TextInput
+                    style={{ flex: 1, fontWeight: 'bold', fontSize: 20, backgroundColor: '#fff', borderRadius: 12, padding: 8, marginRight: 8 }}
+                    value={bewerkProduct.naam}
+                    onChangeText={v => setBewerkProduct({ ...bewerkProduct, naam: v })}
+                  />
+                  <TouchableOpacity onPress={() => setToonCategorieModal(true)}>
+                    <Text style={{ fontSize: 28, marginLeft: 8 }}>{bewerkProduct.categorieEmoji || '🏷️'}</Text>
+                  </TouchableOpacity>
+                  </View>
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }} onPress={() => setToonCategorieModal(true)}>
+                  <Text style={{ fontSize: 20, marginRight: 8 }}>{bewerkProduct.categorieEmoji || '🏷️'}</Text>
+                  <Text style={{ fontWeight: 'bold', color: '#888' }}>{bewerkProduct.categorie || 'Categorie kiezen'}</Text>
+                </TouchableOpacity>
+                <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Notitie toevoegen</Text>
+          <TextInput
+                  style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16 }}
+                  placeholder="Notitie"
+                  placeholderTextColor="#bbb"
+                  value={bewerkProduct.notitie || ''}
+                  onChangeText={v => setBewerkProduct({ ...bewerkProduct, notitie: v })}
+                />
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Hoeveelheid</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10 }}>
+                      <TouchableOpacity style={{ padding: 8 }} onPress={() => setBewerkProduct({ ...bewerkProduct, hoeveelheid: Math.max(1, parseInt(bewerkProduct.hoeveelheid || '1', 10) - 1).toString() })}>
+                        <MaterialCommunityIcons name="minus" size={22} color="#2196f3" />
+                      </TouchableOpacity>
+                      <TextInput
+                        style={{ flex: 1, padding: 12, fontSize: 16, textAlign: 'center' }}
+                        placeholder="0.0"
+                        placeholderTextColor="#bbb"
+                      keyboardType="numeric"
+                        value={bewerkProduct.hoeveelheid ? String(bewerkProduct.hoeveelheid) : ''}
+                        onChangeText={v => setBewerkProduct({ ...bewerkProduct, hoeveelheid: v.replace(/[^0-9]/g, '') })}
+                      />
+                      <TouchableOpacity style={{ padding: 8 }} onPress={() => setBewerkProduct({ ...bewerkProduct, hoeveelheid: (parseInt(bewerkProduct.hoeveelheid || '1', 10) + 1).toString() })}>
+                        <MaterialCommunityIcons name="plus" size={22} color="#2196f3" />
+                    </TouchableOpacity>
+                  </View>
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Eenheid</Text>
+          <TextInput
+                      style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16 }}
+                      placeholder="Eenheid"
+                      placeholderTextColor="#bbb"
+                      value={bewerkProduct.eenheid || ''}
+                      onChangeText={v => setBewerkProduct({ ...bewerkProduct, eenheid: v })}
+                    />
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Prijs</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10 }}>
+                      <TextInput
+                        style={{ flex: 1, padding: 12, fontSize: 16 }}
+                        placeholder="Prijs"
+                        placeholderTextColor="#bbb"
+            keyboardType="decimal-pad"
+                        value={bewerkProduct.prijs ? String(bewerkProduct.prijs) : ''}
+                        onChangeText={v => setBewerkProduct({ ...bewerkProduct, prijs: v })}
+          />
+                      <TouchableOpacity style={{ padding: 8 }} onPress={() => setBewerkProduct({ ...bewerkProduct, prijs: '' })}>
+                        <MaterialCommunityIcons name="close" size={20} color="#bbb" />
+                      </TouchableOpacity>
+        </View>
+      </View>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>TOTAAL</Text>
+                    <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{bewerkProduct.prijs && bewerkProduct.hoeveelheid ? `€ ${(parseFloat(bewerkProduct.prijs) * parseFloat(bewerkProduct.hoeveelheid)).toFixed(2)}` : '€ 0,00'}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={{ backgroundColor: '#e3f0ff', borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 8 }} onPress={handleProductDetailsOpslaan}>
+                  <Text style={{ color: '#2196f3', fontWeight: 'bold', fontSize: 18 }}>Volgende</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+        </KeyboardAvoidingView>
+        </Modal>
+
+        {/* Categorie wijzigen modal */}
+      <Modal
+          visible={toonCategorieModal}
+          transparent
+        animationType="slide"
+          onRequestClose={() => setToonCategorieModal(false)}
+        >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: '#fff' }]}> 
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <TouchableOpacity onPress={() => setToonCategorieModal(false)}>
+                <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+              </TouchableOpacity>
+              <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', fontSize: 18 }}>Wijzig categorie</Text>
+              <View style={{ width: 28 }} />
+            </View>
+            {bewerkProduct && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 20, flex: 1 }}>{bewerkProduct.naam}</Text>
+                <Text style={{ fontSize: 28, marginLeft: 8 }}>{bewerkProduct.categorieEmoji || '🏷️'}</Text>
+              </View>
+            )}
+            <View style={{ flexDirection: 'row', marginBottom: 16, backgroundColor: '#f5f5f5', borderRadius: 12 }}>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: categorieTab === 'Algemeen' ? '#fff' : 'transparent', alignItems: 'center' }}
+                onPress={() => setCategorieTab('Algemeen')}
+              >
+                <Text style={{ fontWeight: 'bold', color: categorieTab === 'Algemeen' ? '#222' : '#888' }}>Algemeen</Text>
+                </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: categorieTab === 'Mijn categorieën' ? '#fff' : 'transparent', alignItems: 'center' }}
+                onPress={() => setCategorieTab('Mijn categorieën')}
+              >
+                <Text style={{ fontWeight: 'bold', color: categorieTab === 'Mijn categorieën' ? '#222' : '#888' }}>Mijn categorieën</Text>
+                </TouchableOpacity>
+              </View>
+            <FlatList
+                data={CATEGORIEEN}
+                keyExtractor={item => item.naam}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }} onPress={() => handleCategorieWijzigen(item)}>
+                  <Text style={{ fontSize: 22, marginRight: 16 }}>{item.emoji}</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#444' }}>{item.naam}</Text>
+                    </TouchableOpacity>
+                  )}
+            />
+            {/* <TouchableOpacity style={{ backgroundColor: '#2196f3', borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 16 }}>
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>MAAK EEN NIEUWE CATEGORIE</Text>
+            </TouchableOpacity> */}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Sorteer-modal */}
+      <Modal
+        visible={toonSorteerModal}
+          transparent
+        animationType="slide"
+        onRequestClose={() => setToonSorteerModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: 320 }]}> 
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <TouchableOpacity onPress={() => setToonSorteerModal(false)}>
+                <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+              </TouchableOpacity>
+              <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', fontSize: 18 }}>Sorteer op:</Text>
+              <TouchableOpacity onPress={() => setToonSorteerModal(false)}>
+                <MaterialCommunityIcons name="close" size={28} color="#888" />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }} onPress={() => setSorteerOptie('Categorieën')}>
+              <MaterialCommunityIcons name="sort-variant" size={22} color={sorteerOptie === 'Categorieën' ? '#4caf50' : '#888'} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Categorieën' ? '#4caf50' : '#222' }}>Categorieën</Text>
+              {sorteerOptie === 'Categorieën' && <MaterialCommunityIcons name="check" size={22} color="#4caf50" />}
+              </TouchableOpacity>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }} onPress={() => setSorteerOptie('Alfabetisch')}>
+              <MaterialCommunityIcons name="sort-alphabetical-variant" size={22} color={sorteerOptie === 'Alfabetisch' ? '#4caf50' : '#888'} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Alfabetisch' ? '#4caf50' : '#222' }}>Alfabetisch</Text>
+              {sorteerOptie === 'Alfabetisch' && <MaterialCommunityIcons name="check" size={22} color="#4caf50" />}
+              </TouchableOpacity>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }} onPress={() => setSorteerOptie('Aangepast')}>
+              <MaterialCommunityIcons name="sort" size={22} color={sorteerOptie === 'Aangepast' ? '#4caf50' : '#888'} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Aangepast' ? '#4caf50' : '#222' }}>Aangepast</Text>
+              {sorteerOptie === 'Aangepast' && <MaterialCommunityIcons name="check" size={22} color="#4caf50" />}
+            </TouchableOpacity>
+            <Text style={{ color: '#888', fontWeight: 'bold', marginTop: 18, marginBottom: 8 }}>AFGEVINKTE ITEMS</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f5f5f5', borderRadius: 12, padding: 14, marginBottom: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: 'bold', color: '#222' }}>Chronologisch</Text>
+                <Text style={{ color: '#888', fontSize: 13 }}>Gekochte producten worden gesorteerd in de volgorde waarin ze zijn aangevinkt.</Text>
+            </View>
+              <TouchableOpacity onPress={() => setChronologischChecked(!chronologischChecked)} style={{ marginLeft: 12 }}>
+                <MaterialCommunityIcons name={chronologischChecked ? 'toggle-switch' : 'toggle-switch-off-outline'} size={38} color={chronologischChecked ? '#4caf50' : '#bbb'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        </Modal>
+
+      {/* Vriendelijke duplicaat waarschuwing modal */}
+        <Modal
+        visible={toonDuplicaatModal}
+          transparent
+        animationType="fade"
+        onRequestClose={() => setToonDuplicaatModal(false)}
+      >
+        <View style={[styles.modalOverlay, { justifyContent: 'center' }]}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            padding: 24,
+            margin: 20,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 8,
+            maxWidth: '90%',
+          }}>
+            <MaterialCommunityIcons name="information-outline" size={48} color="#4caf50" style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#222', textAlign: 'center', marginBottom: 8 }}>
+              Weet u zeker?
+            </Text>
+            <Text style={{ fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 24, lineHeight: 22 }}>
+              "{duplicaatProduct}" staat al op uw lijst.{'\n'}Wilt u dit product nog een keer toevoegen?
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity 
+                style={{
+                  flex: 1,
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: 12,
+                  paddingVertical: 14,
+                  alignItems: 'center',
+                }}
+                onPress={() => {
+                  setToonDuplicaatModal(false);
+                  setDuplicaatProduct(null);
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#666' }}>
+                  Nee, laat maar
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={{
+                  flex: 1,
+                  backgroundColor: '#4caf50',
+                  borderRadius: 12,
+                  paddingVertical: 14,
+                  alignItems: 'center',
+                }}
+                onPress={() => {
+                  if (duplicaatProduct) {
+                    // Bepaal categorie voor het product
+                    const { categorie, emoji } = getProductCategorie(duplicaatProduct);
+                    
+                    const nieuweProduct = {
+                      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                      naam: duplicaatProduct,
+                      checked: false,
+                      hoeveelheid: '1',
+                      eenheid: 'stuks',
+                      categorie: categorie,
+                      categorieEmoji: emoji,
+                    };
+                    const nieuweLijst = {
+                      ...geselecteerdeLijst,
+                      items: [...geselecteerdeLijst.items, nieuweProduct]
+                    };
+                    setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
+                    setGeselecteerdeLijst(nieuweLijst);
+                  }
+                  setToonDuplicaatModal(false);
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>
+                  Ja, toevoegen
+              </Text>
+              </TouchableOpacity>
+          </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Menu Modal */}
+      <Modal
+        visible={toonMenuModal}
+          transparent
+        animationType="fade"
+        onRequestClose={() => setToonMenuModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Lijst opties</Text>
+              <TouchableOpacity onPress={() => setToonMenuModal(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.menuOptions}>
+              <TouchableOpacity style={styles.menuOption} onPress={handleShareList}>
+                <MaterialCommunityIcons name="share-variant" size={24} color="#4caf50" />
+                <Text style={styles.menuOptionText}>Deel lijst</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.menuOption} onPress={handleViewMembers}>
+                <MaterialCommunityIcons name="account-group" size={24} color="#4caf50" />
+                <Text style={styles.menuOptionText}>Bekijk leden (binnenkort beschikbaar)</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.menuOption} onPress={handleDeleteList}>
+                <MaterialCommunityIcons name="delete" size={24} color="#ff4444" />
+                <Text style={[styles.menuOptionText, { color: '#ff4444' }]}>Verwijder lijst</Text>
+        </TouchableOpacity>
+      </View>
+        </View>
+          </View>
+      </Modal>
+
+      {/* Share List Modal */}
+      <ShareListModal
+        visible={toonShareModal}
+        onClose={() => setToonShareModal(false)}
+        listData={geselecteerdeLijst}
+      />
+
+      {/* View Members Modal */}
+      <ViewMembersModal
+        visible={toonViewMembersModal}
+        onClose={() => setToonViewMembersModal(false)}
+        listCode={currentListCode}
+        isOwner={isListOwner}
+      />
+
+      {/* Nieuwe Lijst Naam Modal */}
+      <Modal
+        visible={toonNieuweLijstNaamModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setToonNieuweLijstNaamModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { height: 'auto', maxHeight: 300 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: '#333' }]}>Nieuwe lijst</Text>
+              <TouchableOpacity onPress={() => setToonNieuweLijstNaamModal(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+            </View>
+            
+            <View style={{ padding: 16 }}>
+              <Text style={{ fontSize: 16, color: '#666', marginBottom: 16 }}>
+                Geef je nieuwe lijst een naam:
+              </Text>
+              
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Bijv. Boodschappen, Feestje, etc."
+              value={nieuweLijstNaam}
+              onChangeText={setNieuweLijstNaam}
+              autoFocus
+                onSubmitEditing={bevestigNieuweLijst}
+                returnKeyType="done"
+              />
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+                <TouchableOpacity 
+                  style={[styles.addButton, { backgroundColor: '#ccc', flex: 0.4 }]}
+                  onPress={() => setToonNieuweLijstNaamModal(false)}
+                >
+                  <Text style={[styles.addButtonText, { color: '#666' }]}>Annuleren</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.addButton, { flex: 0.4 }]}
+                  onPress={bevestigNieuweLijst}
+                >
+                  <Text style={styles.addButtonText}>Aanmaken</Text>
+              </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Nieuw menu-modal */}
+      <Modal
+        visible={toonNieuwMenuModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setToonNieuwMenuModal(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.15)' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }}>
+            <View style={{ width: 40, height: 4, backgroundColor: '#eee', borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
+            
+            <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => { handleShareList(); setToonNieuwMenuModal(false); }}>
+              <MaterialCommunityIcons name="account-plus" size={22} color="#888" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#222' }}>Delen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => { setToonViewMembersModal(true); setToonNieuwMenuModal(false); }}>
+              <MaterialCommunityIcons name="account-group" size={22} color="#888" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#222' }}>Bekijk leden (binnenkort beschikbaar)</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={handleAlleItemsDeselecteren}>
+              <MaterialCommunityIcons name="refresh" size={22} color="#888" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#222' }}>Alle items deselecteren</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={handleAlleItemsSelecteren}>
+              <MaterialCommunityIcons name="check-all" size={22} color="#888" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#222' }}>Check all items</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => setVerwijderBevestigingVisible(true)}>
+              <MaterialCommunityIcons name="delete" size={22} color="#e53935" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#e53935' }}>Verwijder gekochte artikelen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Vriendelijke bevestiging voor verwijderen */}
+      <Modal
+        visible={verwijderBevestigingVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVerwijderBevestigingVisible(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.18)' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 28, width: '80%', alignItems: 'center' }}>
+            <Text style={{ fontSize: 17, color: '#222', marginBottom: 16, textAlign: 'center' }}>
+              Wil je de gekochte artikelen uit je lijst halen?
+              Je kunt ze later altijd weer toevoegen.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+              <TouchableOpacity onPress={() => setVerwijderBevestigingVisible(false)} style={{ flex: 1, alignItems: 'center', padding: 12 }}>
+                <Text style={{ color: '#2196f3', fontWeight: 'bold', fontSize: 16 }}>Annuleren</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleVerwijderGekochteArtikelen} style={{ flex: 1, alignItems: 'center', padding: 12 }}>
+                <Text style={{ color: '#e53935', fontWeight: 'bold', fontSize: 16 }}>Verwijderen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {selectMode && selectedListIds.length > 0 && (
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 24, alignItems: 'center', zIndex: 10 }}>
+          <TouchableOpacity
+            style={{ backgroundColor: '#e53935', borderRadius: 24, paddingVertical: 14, paddingHorizontal: 32 }}
+            onPress={() => {
+              Alert.alert(
+                'Lijsten verwijderen',
+                `Weet je zeker dat je ${selectedListIds.length} lijst(en) wilt verwijderen?`,
+                [
+                  { text: 'Annuleren', style: 'cancel' },
+                  {
+                    text: 'Verwijderen', style: 'destructive', onPress: handleBulkVerwijderLijsten }
+                ]
+              );
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              Verwijder geselecteerde lijsten ({selectedListIds.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#f7f7f7',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  lijstenList: {
+    padding: 16,
+  },
+  lijstCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  lijstCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  lijstCardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  lijstCardMenu: {
+    padding: 4,
+  },
+  lijstCardProgress: {
+    height: 4,
+    backgroundColor: '#eee',
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  lijstCardProgressBar: {
+    height: 4,
+    backgroundColor: '#4caf50',
+    borderRadius: 2,
+  },
+  lijstCardSubtitle: {
+    fontSize: 14,
+    color: '#888',
+  },
+  productenList: {
+    padding: 16,
+  },
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  productRowChecked: {
+    backgroundColor: '#f7f7f7',
+  },
+  productCheckbox: {
+    marginRight: 16,
+  },
+  productInfo: {
+    flex: 1,
+  },
+  productNaam: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  productNaamChecked: {
+    textDecorationLine: 'line-through',
+    color: '#888',
+  },
+  productDetails: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 2,
+  },
+  productDelete: {
+    padding: 4,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    color: '#888',
+    marginBottom: 24,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4caf50',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  floatingAddButton: {
+    position: 'absolute',
+    right: 24,
+    bottom: 80,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4caf50',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    height: '80%',
+    minHeight: 500,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  searchInput: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  productOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  productOptionText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 16,
+  },
+  menuOptions: {
+    flex: 1,
+  },
+  menuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  menuOptionText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 16,
+  },
+}); 
