@@ -61,7 +61,7 @@ export default function SettingsScreen() {
             <MaterialCommunityIcons name="help-circle-outline" size={24} color="#bbb" />
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.row}>
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('About')}>
             <Text style={styles.rowText}>Over deze app</Text>
             <MaterialCommunityIcons name="information-outline" size={24} color="#bbb" />
           </TouchableOpacity>
