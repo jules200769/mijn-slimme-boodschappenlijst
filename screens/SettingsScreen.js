@@ -1,80 +1,94 @@
 import React from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
   const { signOut, user } = useAuth();
-  // Voeg hier states toe voor switches als je die wilt gebruiken
-  // Voorbeeld: const [openLastList, setOpenLastList] = React.useState(false);
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   const displayName = user?.name || user?.user_metadata?.name || 'naam van profiel';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f7f7' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: 0 }}>
         {/* Profiel header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileCircle}>
-            <Text style={styles.profileInitial}>
+        <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
+          <View style={[styles.profileCircle, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.profileInitial, { color: colors.primary }]}>
               {displayName[0]?.toUpperCase() || '?'}
             </Text>
           </View>
-          <Text style={styles.profileName}>
+          <Text style={[styles.profileName, { color: colors.text }]}>
             {`"${displayName}"`}
           </Text>
         </View>
         {/* Profiel bewerken knop */}
         <TouchableOpacity style={styles.editProfileButton} onPress={() => navigation.navigate('EditProfile')}>
-          <Text style={styles.editProfileText}>Profiel bewerken</Text>
+          <Text style={[styles.editProfileText, { color: colors.success }]}>Profiel bewerken</Text>
         </TouchableOpacity>
 
         {/* ALGEMEEN */}
-        <Text style={styles.sectionLabel}>ALGEMEEN</Text>
-        <View style={styles.sectionCard}>
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>ALGEMEEN</Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.surface }]}>
           {/* Profiel bewerken */}
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EditProfile')}>
-            <Text style={styles.rowText}>Profiel bewerken</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Profiel bewerken</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          
+          {/* Thema toggle */}
+          <View style={styles.row}>
+            <Text style={[styles.rowText, { color: colors.text }]}>Thema</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[styles.rowText, { color: colors.textSecondary, marginRight: 8 }]}>
+                {isDarkMode ? 'donker' : 'licht'}
+              </Text>
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.switchTrack, true: colors.switchActive }}
+                thumbColor={colors.switchThumb}
+                ios_backgroundColor={colors.switchTrack}
+              />
+            </View>
+          </View>
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          
           {/* Verwijderd: Taal keuze */}
           {/* Extra opties als placeholder */}
           <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowText}>Notificaties beheren</Text>
-            <MaterialCommunityIcons name="bell-outline" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Notificaties beheren</Text>
+            <MaterialCommunityIcons name="bell-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowText}>Privacy-instellingen</Text>
-            <MaterialCommunityIcons name="shield-outline" size={24} color="#bbb" />
-          </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Feedback')}>
-            <Text style={styles.rowText}>Feedback geven</Text>
-            <MaterialCommunityIcons name="message-outline" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Feedback geven</Text>
+            <MaterialCommunityIcons name="message-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowText}>Help & Support</Text>
-            <MaterialCommunityIcons name="help-circle-outline" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Help & Support</Text>
+            <MaterialCommunityIcons name="help-circle-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowText}>Over deze app</Text>
-            <MaterialCommunityIcons name="information-outline" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Over deze app</Text>
+            <MaterialCommunityIcons name="information-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowText}>Tutorial!!</Text>
-            <MaterialCommunityIcons name="school-outline" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Tutorial!!</Text>
+            <MaterialCommunityIcons name="school-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
           {/* Uitloggen knop onderaan */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={signOut}>
-            <Text style={[styles.rowText, { color: '#e53935' }]}>Uitloggen</Text>
-            <MaterialCommunityIcons name="logout" size={24} color="#e53935" />
+            <Text style={[styles.rowText, { color: colors.error }]}>Uitloggen</Text>
+            <MaterialCommunityIcons name="logout" size={24} color={colors.error} />
           </TouchableOpacity>
         </View>
         {/* LIJSTEN */}
@@ -89,13 +103,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 32,
     paddingBottom: 16,
-    backgroundColor: '#f7f7f7',
   },
   profileCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e0e0ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -103,24 +115,20 @@ const styles = StyleSheet.create({
   profileInitial: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#7c4dff',
   },
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   sectionLabel: {
     marginLeft: 24,
     marginTop: 16,
     marginBottom: 4,
     fontSize: 13,
-    color: '#888',
     fontWeight: 'bold',
     letterSpacing: 1.2,
   },
   sectionCard: {
-    backgroundColor: '#fff',
     borderRadius: 18,
     marginHorizontal: 16,
     marginBottom: 16,
@@ -142,23 +150,19 @@ const styles = StyleSheet.create({
   },
   rowText: {
     fontSize: 16,
-    color: '#222',
     fontWeight: 'bold',
   },
   rowSubText: {
     fontSize: 14,
-    color: '#4caf50',
     fontWeight: 'bold',
     marginTop: 2,
   },
   rowHint: {
     fontSize: 12,
-    color: '#888',
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#f0f0f0',
     marginLeft: 20,
   },
   editProfileButton: {
@@ -166,7 +170,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   editProfileText: {
-    color: '#4caf50',
     fontWeight: 'bold',
     fontSize: 15,
     textDecorationLine: 'underline',

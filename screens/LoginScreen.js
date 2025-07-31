@@ -15,6 +15,7 @@ import {
   Title,
 } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { getAutoLoginEnabled, setAutoLoginEnabled } from '../lib/autoLogin';
 import { Switch } from 'react-native';
@@ -24,6 +25,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, user, autoLoginActive } = useAuth();
+  const { colors } = useTheme();
   const [autoLogin, setAutoLogin] = useState(false);
 
   useEffect(() => {
@@ -110,14 +112,14 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Card style={styles.card}>
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
           <Card.Content>
-            <Title style={styles.title}>Welcome Back</Title>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Title style={[styles.title, { color: colors.text }]}>Welcome Back</Title>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to your account</Text>
 
             <TextInput
               label="Email"
@@ -127,6 +129,7 @@ const LoginScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
+              theme={{ colors: { primary: colors.primary } }}
             />
 
             <TextInput
@@ -136,16 +139,17 @@ const LoginScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
+              theme={{ colors: { primary: colors.primary } }}
             />
             {/* Automatisch inloggen switch */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
               <Switch
                 value={autoLogin}
                 onValueChange={setAutoLogin}
-                trackColor={{ true: '#4caf50', false: '#ccc' }}
-                thumbColor={autoLogin ? '#4caf50' : '#fff'}
+                trackColor={{ true: colors.switchActive, false: colors.switchTrack }}
+                thumbColor={autoLogin ? colors.switchActive : colors.switchThumb}
               />
-              <Text style={{ marginLeft: 12, fontSize: 16 }}>Automatisch inloggen</Text>
+              <Text style={{ marginLeft: 12, fontSize: 16, color: colors.text }}>Automatisch inloggen</Text>
             </View>
 
             <Button
@@ -153,17 +157,18 @@ const LoginScreen = ({ navigation }) => {
               onPress={handleLogin}
               loading={loading}
               disabled={loading}
-              style={styles.button}
+              style={[styles.button, { backgroundColor: colors.primary }]}
             >
               Sign In
             </Button>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Text style={[styles.footerText, { color: colors.textSecondary }]}>Don't have an account? </Text>
               <Button
                 mode="text"
                 onPress={() => navigation.navigate('Register')}
                 style={styles.linkButton}
+                labelStyle={{ color: colors.primary }}
               >
                 Sign Up
               </Button>
@@ -174,6 +179,7 @@ const LoginScreen = ({ navigation }) => {
                 mode="text"
                 onPress={handleForgotPassword}
                 style={styles.skipButton}
+                labelStyle={{ color: colors.primary }}
               >
                 Wachtwoord vergeten?
               </Button>
@@ -188,7 +194,6 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -205,17 +210,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#1976d2',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
-    color: '#666',
   },
   input: {
     marginBottom: 16,
-    backgroundColor: '#ffffff',
   },
   button: {
     marginTop: 8,
@@ -226,7 +228,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 12,
     paddingVertical: 8,
-    borderColor: '#4285f4',
   },
   divider: {
     flexDirection: 'row',
@@ -236,11 +237,9 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e0e0e0',
   },
   dividerText: {
     marginHorizontal: 16,
-    color: '#666',
     fontSize: 14,
   },
   footer: {
@@ -250,7 +249,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: '#666',
     fontSize: 14,
   },
   linkButton: {

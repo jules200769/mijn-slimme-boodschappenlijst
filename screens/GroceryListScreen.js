@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, TextInput, FlatList, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { lists, supabase, sharedLists } from '../lib/supabase';
 import ShareListModal from '../components/ShareListModal';
 import ViewMembersModal from '../components/ViewMembersModal';
@@ -122,6 +123,7 @@ const PRODUCT_CATEGORIE_MAPPING = {
 
 export default function GroceryListScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [lijsten, setLijsten] = useState([]);
   const [geselecteerdeLijst, setGeselecteerdeLijst] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -909,7 +911,7 @@ export default function GroceryListScreen() {
     const isSelected = selectedListIds.includes(item.id);
     return (
       <TouchableOpacity 
-        style={styles.lijstCard} 
+        style={[styles.lijstCard, { backgroundColor: colors.surface }]} 
         onPress={() => {
           if (selectMode) {
             // Toggle selectie
@@ -940,11 +942,11 @@ export default function GroceryListScreen() {
                 <MaterialCommunityIcons
                   name={isSelected ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
                   size={26}
-                  color={isSelected ? '#1976d2' : '#bbb'}
+                  color={isSelected ? colors.primary : colors.textTertiary}
                 />
               </TouchableOpacity>
             )}
-          <Text style={styles.lijstCardTitle}>{item.naam}</Text>
+          <Text style={[styles.lijstCardTitle, { color: colors.text }]}>{item.naam}</Text>
           </View>
           <TouchableOpacity 
             onPress={(e) => {
@@ -954,13 +956,13 @@ export default function GroceryListScreen() {
             style={styles.lijstCardMenu}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Groter touch area
           >
-            <MaterialCommunityIcons name="delete" size={24} color="#e53935" />
+            <MaterialCommunityIcons name="delete" size={24} color={colors.error} />
           </TouchableOpacity>
         </View>
         <View style={styles.lijstCardProgress}>
           <View style={[styles.lijstCardProgressBar, { width: `${totalItems > 0 ? (checkedItems / totalItems) * 100 : 0}%` }]} />
         </View>
-        <Text style={styles.lijstCardSubtitle}>
+        <Text style={[styles.lijstCardSubtitle, { color: colors.textSecondary }]}>
           {checkedItems} van {totalItems} producten afgevinkt
         </Text>
       </TouchableOpacity>
@@ -975,7 +977,7 @@ export default function GroceryListScreen() {
     if (item.type === 'header') {
     return (
         <View style={{
-          backgroundColor: '#f5f5f5',
+          backgroundColor: colors.background,
           paddingVertical: 12,
           paddingHorizontal: 16,
           marginTop: 16,
@@ -985,7 +987,7 @@ export default function GroceryListScreen() {
           <Text style={{
             fontWeight: 'bold',
             fontSize: 16,
-            color: '#666',
+            color: colors.textSecondary,
             textTransform: 'uppercase',
           }}>
             {item.categorie} ({item.items.length})
@@ -1004,23 +1006,23 @@ export default function GroceryListScreen() {
           <MaterialCommunityIcons 
             name={item.checked ? "check-circle" : "checkbox-blank-circle-outline"} 
             size={28} 
-            color={item.checked ? "#4caf50" : "#bbb"} 
+            color={item.checked ? colors.success : colors.textTertiary} 
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.productInfo} onPress={() => handleProductDetails(item)}>
-          <Text style={[styles.productNaam, item.checked && styles.productNaamChecked]}>
+          <Text style={[styles.productNaam, item.checked && styles.productNaamChecked, { color: colors.text }]}>
             {item.naam}
           </Text>
-          <Text style={styles.productDetails}>
+          <Text style={[styles.productDetails, { color: colors.textSecondary }]}>
             {item.hoeveelheid} {item.eenheid}
           </Text>
           {item.notitie ? (
-            <Text style={[styles.productDetails, { color: '#888', fontStyle: 'italic' }]} numberOfLines={2}>
+            <Text style={[styles.productDetails, { color: colors.textSecondary, fontStyle: 'italic' }]} numberOfLines={2}>
               {item.notitie}
             </Text>
           ) : null}
           {item.prijs ? (
-            <Text style={[styles.productDetails, { color: '#4caf50', fontWeight: 'bold' }]}> 
+            <Text style={[styles.productDetails, { color: colors.success, fontWeight: 'bold' }]}> 
               € {parseFloat(item.prijs).toFixed(2)}
               {item.hoeveelheid && !isNaN(parseFloat(item.hoeveelheid)) ? ` | Totaal: € ${(parseFloat(item.prijs) * parseFloat(item.hoeveelheid)).toFixed(2)}` : ''}
             </Text>
@@ -1033,7 +1035,7 @@ export default function GroceryListScreen() {
           onPress={() => handleProductVerwijderen(item.id)}
           style={styles.productDelete}
         >
-          <MaterialCommunityIcons name="delete" size={24} color="#e53935" />
+          <MaterialCommunityIcons name="delete" size={24} color={colors.error} />
         </TouchableOpacity>
       </View>
     );
@@ -1074,11 +1076,11 @@ export default function GroceryListScreen() {
   // Hoofdscherm - lijsten overzicht
   if (geselecteerdeLijst == null) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {geselecteerdeLijst == null ? (
           <>
-                    <View style={styles.header}>
-          <Text style={styles.title}>Mijn lijsten</Text>
+                    <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Mijn lijsten</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {selectMode && selectedListIds.length > 0 && (
               <TouchableOpacity
@@ -1095,11 +1097,11 @@ export default function GroceryListScreen() {
                 }}
                 style={{ marginRight: 18 }}
               >
-                <MaterialCommunityIcons name="trash-can-outline" size={26} color="#e53935" />
+                <MaterialCommunityIcons name="trash-can-outline" size={26} color={colors.error} />
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={() => setSelectMode(!selectMode)}>
-              <Text style={{ color: '#1976d2', fontWeight: 'bold', fontSize: 16 }}>
+              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>
                 {selectMode ? 'Annuleren' : 'Selecteren'}
               </Text>
             </TouchableOpacity>
@@ -1107,14 +1109,14 @@ export default function GroceryListScreen() {
         </View>
             {lijsten.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Nog geen lijsten</Text>
-                <TouchableOpacity style={styles.addButton} onPress={handleNieuweLijst}>
+                <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>Nog geen lijsten</Text>
+                <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={handleNieuweLijst}>
                   <MaterialCommunityIcons name="plus" size={24} color="#fff" />
                   <Text style={styles.addButtonText}>NIEUWE LIJST</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.addButton, { backgroundColor: '#f5f5f5', marginTop: 16 }]} onPress={() => setToonJoinModal(true)}>
-                  <MaterialCommunityIcons name="account-plus" size={24} color="#4caf50" />
-                  <Text style={[styles.addButtonText, { color: '#4caf50' }]}>JOIN LIJST</Text>
+                <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.surface, marginTop: 16 }]} onPress={() => setToonJoinModal(true)}>
+                  <MaterialCommunityIcons name="account-plus" size={24} color={colors.success} />
+                  <Text style={[styles.addButtonText, { color: colors.success }]}>JOIN LIJST</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -1125,39 +1127,39 @@ export default function GroceryListScreen() {
                   keyExtractor={item => item.id}
                   contentContainerStyle={styles.lijstenList}
                 />
-                <TouchableOpacity style={styles.floatingAddButton} onPress={handleNieuweLijst}>
+                <TouchableOpacity style={[styles.floatingAddButton, { backgroundColor: colors.primary }]} onPress={handleNieuweLijst}>
                   <MaterialCommunityIcons name="plus" size={24} color="#fff" />
                   <Text style={styles.addButtonText}>NIEUWE LIJST</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.floatingAddButton, { bottom: 20, backgroundColor: '#f5f5f5' }]} onPress={() => setToonJoinModal(true)}>
-                  <MaterialCommunityIcons name="account-plus" size={24} color="#4caf50" />
-                  <Text style={[styles.addButtonText, { color: '#4caf50' }]}>JOIN LIJST</Text>
+                <TouchableOpacity style={[styles.floatingAddButton, { bottom: 20, backgroundColor: colors.surface }]} onPress={() => setToonJoinModal(true)}>
+                  <MaterialCommunityIcons name="account-plus" size={24} color={colors.success} />
+                  <Text style={[styles.addButtonText, { color: colors.success }]}>JOIN LIJST</Text>
                 </TouchableOpacity>
               </>
             )}
           </>
         ) : (
-          <>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => setGeselecteerdeLijst(null)}>
-            <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
-          </TouchableOpacity>
-              <Text style={styles.title}>{geselecteerdeLijst.naam}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <TouchableOpacity onPress={() => setToonSorteerModal(true)} style={{ marginRight: 8 }}>
-                  <MaterialCommunityIcons name="filter-variant" size={28} color="#4caf50" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setToonNieuwMenuModal(true)} style={{ marginLeft: 8 }}>
-                  <MaterialCommunityIcons name="dots-vertical" size={28} color="#333" />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.background }]}>
+              <TouchableOpacity onPress={() => setGeselecteerdeLijst(null)}>
+                <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
+              </TouchableOpacity>
+                  <Text style={[styles.title, { color: colors.text }]}>{geselecteerdeLijst.naam}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => setToonSorteerModal(true)} style={{ marginRight: 8 }}>
+                      <MaterialCommunityIcons name="filter-variant" size={28} color={colors.success} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setToonNieuwMenuModal(true)} style={{ marginLeft: 8 }}>
+                      <MaterialCommunityIcons name="dots-vertical" size={28} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
             {geselecteerdeLijst.items.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Nog geen producten</Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => setToonProductModal(true)}>
+                <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>Nog geen producten</Text>
+            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setToonProductModal(true)}>
               <MaterialCommunityIcons name="plus" size={24} color="#fff" />
-                  <Text style={styles.addButtonText}>PRODUCT TOEVOEGEN</Text>
+                  <Text style={[styles.addButtonText, { color: '#fff' }]}>PRODUCT TOEVOEGEN</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -1174,20 +1176,20 @@ export default function GroceryListScreen() {
               <View style={{ alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
                 {toonAfgevinkte ? (
                   <TouchableOpacity onPress={() => setToonAfgevinkte(false)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-                    <MaterialCommunityIcons name="eye-off-outline" size={22} color="#888" style={{ marginRight: 6 }} />
-                    <Text style={{ color: '#888', fontWeight: 'bold' }}>Verberg afgevinkte producten</Text>
+                    <MaterialCommunityIcons name="eye-off-outline" size={22} color={colors.textSecondary} style={{ marginRight: 6 }} />
+                    <Text style={{ color: colors.textSecondary, fontWeight: 'bold' }}>Verberg afgevinkte producten</Text>
       </TouchableOpacity>
                 ) : (
                   <TouchableOpacity onPress={() => setToonAfgevinkte(true)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-                    <MaterialCommunityIcons name="eye-outline" size={22} color="#4caf50" style={{ marginRight: 6 }} />
-                    <Text style={{ color: '#4caf50', fontWeight: 'bold' }}>Toon afgevinkte producten</Text>
+                    <MaterialCommunityIcons name="eye-outline" size={22} color={colors.success} style={{ marginRight: 6 }} />
+                    <Text style={{ color: colors.success, fontWeight: 'bold' }}>Toon afgevinkte producten</Text>
           </TouchableOpacity>
               )}
               </View>
             )}
             {geselecteerdeLijst.items.length > 0 && (
               <TouchableOpacity 
-                style={styles.floatingAddButton} 
+                style={[styles.floatingAddButton, { backgroundColor: colors.primary }]} 
                 onPress={() => {
                   setToonProductModal(true);
                   setGekozenCategorie(null);
@@ -1200,7 +1202,7 @@ export default function GroceryListScreen() {
                 <Text style={styles.addButtonText}>TOEVOEGEN</Text>
               </TouchableOpacity>
             )}
-          </>
+          </SafeAreaView>
         )}
         {/* --- MODALS ALTIJD HIERONDER --- */}
         <JoinListModal
@@ -1218,7 +1220,7 @@ export default function GroceryListScreen() {
         >
           <View style={[styles.modalOverlay, { justifyContent: 'center', alignItems: 'center' }]}>
             <View style={{
-              backgroundColor: '#fff',
+              backgroundColor: colors.surface,
               borderRadius: 20,
               padding: 24,
               margin: 20,
@@ -1231,27 +1233,29 @@ export default function GroceryListScreen() {
               elevation: 8,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#333' }}>Nieuwe lijst</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>Nieuwe lijst</Text>
                 <TouchableOpacity onPress={() => setToonNieuweLijstNaamModal(false)}>
-                  <MaterialCommunityIcons name="close" size={24} color="#666" />
+                  <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
               
-              <Text style={{ fontSize: 16, color: '#666', marginBottom: 16 }}>
+              <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 16 }}>
                 Geef je nieuwe lijst een naam:
               </Text>
               
               <TextInput
                 style={{
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: colors.background,
                   borderRadius: 12,
                   padding: 16,
                   fontSize: 16,
                   marginBottom: 24,
                   borderWidth: 1,
-                  borderColor: '#e0e0e0',
+                  borderColor: colors.divider,
+                  color: colors.text,
                 }}
                 placeholder="Bijv. Boodschappen, Feestje, etc."
+                placeholderTextColor={colors.textTertiary}
                 value={nieuweLijstNaam}
                 onChangeText={setNieuweLijstNaam}
                 autoFocus
@@ -1263,14 +1267,14 @@ export default function GroceryListScreen() {
                 <TouchableOpacity 
                   style={{
                     flex: 1,
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: colors.background,
                     borderRadius: 12,
                     paddingVertical: 14,
                     alignItems: 'center',
                   }}
                   onPress={() => setToonNieuweLijstNaamModal(false)}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#666' }}>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.textSecondary }}>
                     Annuleren
                   </Text>
                 </TouchableOpacity>
@@ -1278,7 +1282,7 @@ export default function GroceryListScreen() {
                 <TouchableOpacity 
                   style={{
                     flex: 1,
-                    backgroundColor: '#4caf50',
+                    backgroundColor: colors.success,
                     borderRadius: 12,
                     paddingVertical: 14,
                     alignItems: 'center',
@@ -1374,24 +1378,24 @@ export default function GroceryListScreen() {
           onRequestClose={() => setToonProductModal(false)}
         >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setToonProductModal(false)}>
-                <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+                <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Product toevoegen</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Product toevoegen</Text>
               <View style={{ width: 28 }} />
             </View>
 
             <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#222' }}>Stel jouw lijstje samen</Text>
+              <Text style={{ fontWeight: 'bold', fontSize: 20, color: colors.text }}>Stel jouw lijstje samen</Text>
             </View>
 
             <View style={{ position: 'relative' }}>
                 <TextInput
-                style={[styles.searchInput, { paddingRight: 40 }]}
+                style={[styles.searchInput, { paddingRight: 40, backgroundColor: colors.background, color: colors.text, borderColor: colors.divider }]}
                 placeholder={productZoek ? "Zoek producten..." : `Zoek producten... (bijv. ${zoekSuggestie})`}
-                placeholderTextColor={productZoek ? "#bbb" : "#999"}
+                placeholderTextColor={colors.textTertiary}
                   value={productZoek}
                 onChangeText={(text) => {
                   setProductZoek(text);
@@ -1414,7 +1418,7 @@ export default function GroceryListScreen() {
                     setToonZoekResultaten(false);
                   }}
                 >
-                  <MaterialCommunityIcons name="close" size={20} color="#bbb" />
+                  <MaterialCommunityIcons name="close" size={20} color={colors.textTertiary} />
                 </TouchableOpacity>
               )}
               </View>
@@ -1992,28 +1996,28 @@ export default function GroceryListScreen() {
         onRequestClose={() => setToonNieuwMenuModal(false)}
       >
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.15)' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }}>
-            <View style={{ width: 40, height: 4, backgroundColor: '#eee', borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
+                      <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }}>
+            <View style={{ width: 40, height: 4, backgroundColor: colors.divider, borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
             
             <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => { handleShareList(); setToonNieuwMenuModal(false); }}>
-              <MaterialCommunityIcons name="account-plus" size={22} color="#888" style={{ marginRight: 16 }} />
-              <Text style={{ fontSize: 16, color: '#222' }}>Delen</Text>
+              <MaterialCommunityIcons name="account-plus" size={22} color={colors.textSecondary} style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: colors.text }}>Delen</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => { setToonViewMembersModal(true); setToonNieuwMenuModal(false); }}>
-              <MaterialCommunityIcons name="account-group" size={22} color="#888" style={{ marginRight: 16 }} />
-              <Text style={{ fontSize: 16, color: '#222' }}>Bekijk leden (binnenkort beschikbaar)</Text>
+              <MaterialCommunityIcons name="account-group" size={22} color={colors.textSecondary} style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: colors.text }}>Bekijk leden (binnenkort beschikbaar)</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={handleAlleItemsDeselecteren}>
-              <MaterialCommunityIcons name="refresh" size={22} color="#888" style={{ marginRight: 16 }} />
-              <Text style={{ fontSize: 16, color: '#222' }}>Alle items deselecteren</Text>
+              <MaterialCommunityIcons name="refresh" size={22} color={colors.textSecondary} style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: colors.text }}>Alle items deselecteren</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={handleAlleItemsSelecteren}>
-              <MaterialCommunityIcons name="check-all" size={22} color="#888" style={{ marginRight: 16 }} />
-              <Text style={{ fontSize: 16, color: '#222' }}>Check all items</Text>
+              <MaterialCommunityIcons name="check-all" size={22} color={colors.textSecondary} style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: colors.text }}>Check all items</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => setVerwijderBevestigingVisible(true)}>
-              <MaterialCommunityIcons name="delete" size={22} color="#e53935" style={{ marginRight: 16 }} />
-              <Text style={{ fontSize: 16, color: '#e53935' }}>Verwijder gekochte artikelen</Text>
+              <MaterialCommunityIcons name="delete" size={22} color={colors.error} style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: colors.error }}>Verwijder gekochte artikelen</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2027,17 +2031,17 @@ export default function GroceryListScreen() {
         onRequestClose={() => setVerwijderBevestigingVisible(false)}
       >
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.18)' }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 28, width: '80%', alignItems: 'center' }}>
-            <Text style={{ fontSize: 17, color: '#222', marginBottom: 16, textAlign: 'center' }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: 18, padding: 28, width: '80%', alignItems: 'center' }}>
+            <Text style={{ fontSize: 17, color: colors.text, marginBottom: 16, textAlign: 'center' }}>
               Wil je de gekochte artikelen uit je lijst halen?
               Je kunt ze later altijd weer toevoegen.
             </Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
               <TouchableOpacity onPress={() => setVerwijderBevestigingVisible(false)} style={{ flex: 1, alignItems: 'center', padding: 12 }}>
-                <Text style={{ color: '#2196f3', fontWeight: 'bold', fontSize: 16 }}>Annuleren</Text>
+                <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>Annuleren</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleVerwijderGekochteArtikelen} style={{ flex: 1, alignItems: 'center', padding: 12 }}>
-                <Text style={{ color: '#e53935', fontWeight: 'bold', fontSize: 16 }}>Verwijderen</Text>
+                <Text style={{ color: colors.error, fontWeight: 'bold', fontSize: 16 }}>Verwijderen</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -2046,7 +2050,7 @@ export default function GroceryListScreen() {
       {selectMode && selectedListIds.length > 0 && (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 24, alignItems: 'center', zIndex: 10 }}>
           <TouchableOpacity
-            style={{ backgroundColor: '#e53935', borderRadius: 24, paddingVertical: 14, paddingHorizontal: 32 }}
+            style={{ backgroundColor: colors.error, borderRadius: 24, paddingVertical: 14, paddingHorizontal: 32 }}
             onPress={() => {
               Alert.alert(
                 'Lijsten verwijderen',
@@ -2072,27 +2076,22 @@ export default function GroceryListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#f7f7f7',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
   },
   lijstenList: {
     padding: 16,
   },
   lijstCard: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -2111,25 +2110,21 @@ const styles = StyleSheet.create({
   lijstCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   lijstCardMenu: {
     padding: 4,
   },
   lijstCardProgress: {
     height: 4,
-    backgroundColor: '#eee',
     borderRadius: 2,
     marginBottom: 8,
   },
   lijstCardProgressBar: {
     height: 4,
-    backgroundColor: '#4caf50',
     borderRadius: 2,
   },
   lijstCardSubtitle: {
     fontSize: 14,
-    color: '#888',
   },
   productenList: {
     padding: 16,
@@ -2137,13 +2132,11 @@ const styles = StyleSheet.create({
   productRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     padding: 16,
     marginBottom: 8,
     borderRadius: 8,
   },
   productRowChecked: {
-    backgroundColor: '#f7f7f7',
   },
   productCheckbox: {
     marginRight: 16,
@@ -2154,15 +2147,12 @@ const styles = StyleSheet.create({
   productNaam: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
   },
   productNaamChecked: {
     textDecorationLine: 'line-through',
-    color: '#888',
   },
   productDetails: {
     fontSize: 14,
-    color: '#888',
     marginTop: 2,
   },
   productDelete: {
@@ -2176,19 +2166,16 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    color: '#888',
     marginBottom: 24,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4caf50',
     borderRadius: 24,
     paddingVertical: 12,
     paddingHorizontal: 24,
   },
   addButtonText: {
-    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
     marginLeft: 8,
@@ -2199,7 +2186,6 @@ const styles = StyleSheet.create({
     bottom: 80,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4caf50',
     borderRadius: 24,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -2215,7 +2201,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -2231,10 +2216,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
   },
   searchInput: {
-    backgroundColor: '#f5f5f5',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
@@ -2245,11 +2228,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   productOptionText: {
     fontSize: 16,
-    color: '#333',
     marginLeft: 16,
   },
   menuOptions: {

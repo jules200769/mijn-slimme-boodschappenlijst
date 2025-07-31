@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 import GroceryListScreen from '../screens/GroceryListScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -30,6 +31,7 @@ function SettingsStack() {
 
 export default function MainNavigator() {
   const { signOut } = useAuth();
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
@@ -49,13 +51,13 @@ export default function MainNavigator() {
 
           return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#4caf50',
-        tabBarInactiveTintColor: '#9e9e9e',
+        tabBarActiveTintColor: colors.success,
+        tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#f5f5f5',
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
+          borderTopColor: colors.divider,
           paddingBottom: 5,
           paddingTop: 5,
           height: 60,

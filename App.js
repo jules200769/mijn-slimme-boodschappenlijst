@@ -4,20 +4,27 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text } from 'react-native';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 import AuthNavigator from './navigation/AuthNavigator';
 import MainNavigator from './navigation/MainNavigator';
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const { colors, isLoading: themeLoading } = useTheme();
 
-  if (loading) {
+  if (loading || themeLoading) {
     return (
       <SafeAreaProvider>
         <PaperProvider>
           <NavigationContainer>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text>Laden...</Text>
+            <View style={{ 
+              flex: 1, 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              backgroundColor: colors.background 
+            }}>
+              <Text style={{ color: colors.text }}>Laden...</Text>
             </View>
           </NavigationContainer>
         </PaperProvider>
@@ -39,7 +46,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
+      <ThemeProvider>
         <AppContent />
+      </ThemeProvider>
     </AuthProvider>
   );
 }

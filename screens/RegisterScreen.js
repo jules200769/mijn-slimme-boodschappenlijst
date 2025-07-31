@@ -15,6 +15,7 @@ import {
   Title,
 } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -23,6 +24,7 @@ const RegisterScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
+  const { colors } = useTheme();
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -69,14 +71,14 @@ const RegisterScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Card style={styles.card}>
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
           <Card.Content>
-            <Title style={styles.title}>Create Account</Title>
-            <Text style={styles.subtitle}>Sign up to get started</Text>
+            <Title style={[styles.title, { color: colors.text }]}>Create Account</Title>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign up to get started</Text>
 
             <TextInput
               label="Full Name"
@@ -84,6 +86,7 @@ const RegisterScreen = ({ navigation }) => {
               onChangeText={setName}
               mode="outlined"
               style={styles.input}
+              theme={{ colors: { primary: colors.primary } }}
             />
 
             <TextInput
@@ -94,6 +97,7 @@ const RegisterScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
+              theme={{ colors: { primary: colors.primary } }}
             />
 
             <TextInput
@@ -103,6 +107,7 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
+              theme={{ colors: { primary: colors.primary } }}
             />
 
             <TextInput
@@ -112,6 +117,7 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
+              theme={{ colors: { primary: colors.primary } }}
             />
 
             <Button
@@ -119,17 +125,18 @@ const RegisterScreen = ({ navigation }) => {
               onPress={handleRegister}
               loading={loading}
               disabled={loading}
-              style={styles.button}
+              style={[styles.button, { backgroundColor: colors.primary }]}
             >
               Create Account
             </Button>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+              <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
               <Button
                 mode="text"
                 onPress={() => navigation.navigate('Login')}
                 style={styles.linkButton}
+                labelStyle={{ color: colors.primary }}
               >
                 Sign In
               </Button>
@@ -144,7 +151,6 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -161,17 +167,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#1976d2',
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
-    color: '#666',
   },
   input: {
     marginBottom: 16,
-    backgroundColor: '#ffffff',
   },
   button: {
     marginTop: 8,
@@ -182,7 +185,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 12,
     paddingVertical: 8,
-    borderColor: '#4285f4',
   },
   divider: {
     flexDirection: 'row',
@@ -192,11 +194,9 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e0e0e0',
   },
   dividerText: {
     marginHorizontal: 16,
-    color: '#666',
     fontSize: 14,
   },
   footer: {
@@ -206,7 +206,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: '#666',
     fontSize: 14,
   },
   linkButton: {
