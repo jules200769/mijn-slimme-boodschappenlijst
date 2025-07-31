@@ -51,7 +51,7 @@ export default function SettingsScreen() {
             <MaterialCommunityIcons name="shield-outline" size={24} color="#bbb" />
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.row}>
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Feedback')}>
             <Text style={styles.rowText}>Feedback geven</Text>
             <MaterialCommunityIcons name="message-outline" size={24} color="#bbb" />
           </TouchableOpacity>

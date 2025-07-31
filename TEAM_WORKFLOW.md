@@ -1,242 +1,141 @@
 # Team Workflow Guide
 
-## 🎯 Team Samenwerking Workflow
+## Samenwerken aan hetzelfde project
 
-### 1. **Project Setup voor Teamleden**
+### Setup voor nieuwe teamleden
 
-#### Voor nieuwe teamleden:
-1. **Clone de repository**
+1. **Clone de repository:**
 ```bash
-git clone [repository-url]
+git clone https://github.com/jules200769/mijn-slimme-boodschappenlijst.git
 cd mijn-slimme-boodschappenlijst
 ```
 
-2. **Installeer dependencies**
+2. **Installeer dependencies:**
 ```bash
 npm install
 ```
 
-3. **Configureer environment**
-- Kopieer `.env.example` naar `.env`
-- Vul je Supabase credentials in
-
-4. **Start development server**
+3. **Setup environment:**
 ```bash
-npm start
+cp env.template .env
+# Vul je eigen environment variables in
 ```
 
-### 2. **Daily Workflow**
+### Dagelijkse workflow
 
-#### Ochtend routine:
+#### 1. Start van de dag
 ```bash
-# Pull latest changes
+# Haal de laatste wijzigingen op
 git pull origin main
 
-# Start development server
+# Start de development server
 npm start
 ```
 
-#### Avond routine:
+#### 2. Werken aan features
 ```bash
-# Commit je changes
+# Maak een nieuwe branch voor je feature
+git checkout -b feature/naam-van-feature
+
+# Werk aan je code...
+
+# Commit regelmatig
 git add .
-git commit -m "feat: beschrijving van je changes"
+git commit -m "Beschrijving van wijzigingen"
 
-# Push naar je feature branch
-git push origin feature/your-feature
+# Push naar GitHub
+git push origin feature/naam-van-feature
 ```
 
-### 3. **Feature Development**
-
-#### Nieuwe feature starten:
+#### 3. Feature afmaken
 ```bash
-# Maak nieuwe branch
-git checkout -b feature/nieuwe-feature-naam
+# Ga terug naar main branch
+git checkout main
 
-# Start development
-npm start
+# Haal laatste wijzigingen op
+git pull origin main
+
+# Merge je feature
+git merge feature/naam-van-feature
+
+# Push naar main
+git push origin main
+
+# Verwijder feature branch (optioneel)
+git branch -d feature/naam-van-feature
 ```
 
-#### Feature voltooien:
+### Cursor instellingen voor team collaboration
+
+1. **Automatische git fetch inschakelen:**
+   - Ga naar `File > Preferences > Settings`
+   - Zoek naar "git.autofetch"
+   - Zet dit aan voor automatische updates
+
+2. **Git integratie:**
+   - Cursor toont automatisch wijzigingen in de gutter
+   - Gebruik `Ctrl+Shift+G` voor git panel
+   - Commit direct vanuit Cursor
+
+### Best practices
+
+1. **Regelmatig pullen:** Altijd `git pull` doen voordat je begint met werken
+2. **Kleine commits:** Commit vaak met duidelijke beschrijvingen
+3. **Branch naming:** Gebruik duidelijke namen zoals `feature/login-screen` of `bugfix/crash-fix`
+4. **Communicatie:** Laat team weten welke features je aan werkt
+5. **Testen:** Test altijd je code voordat je pusht
+
+### Conflict resolution
+
+Als er conflicten zijn:
 ```bash
-# Commit alle changes
+# Pull met rebase om conflicten te voorkomen
+git pull --rebase origin main
+
+# Los conflicten op in je editor
+# Commit de oplossing
 git add .
-git commit -m "feat: implementeer nieuwe feature"
-
-# Push naar remote
-git push origin feature/nieuwe-feature-naam
-
-# Maak Pull Request op GitHub
+git rebase --continue
 ```
 
-### 4. **Code Review Process**
+### Handige git commands
 
-#### Pull Request maken:
-1. Ga naar GitHub repository
-2. Klik "Compare & pull request"
-3. Vul template in:
-   - **Beschrijving**: Wat heb je toegevoegd/gewijzigd?
-   - **Testing**: Hoe heb je getest?
-   - **Screenshots**: Voeg screenshots toe indien UI changes
-
-#### Code review checklist:
-- [ ] Code volgt project conventions
-- [ ] Geen console.log statements
-- [ ] Proper error handling
-- [ ] Responsive design
-- [ ] Accessibility considerations
-- [ ] Performance impact geëvalueerd
-
-### 5. **Communication**
-
-#### Daily Standup (optioneel):
-- Wat heb je gisteren gedaan?
-- Wat ga je vandaag doen?
-- Zijn er blockers?
-
-#### Team chat in Cursor:
-- Gebruik @mentions voor specifieke personen
-- Deel screenshots van bugs/features
-- Vraag om hulp bij problemen
-
-### 6. **File Organization**
-
-#### Nieuwe componenten:
-```
-components/
-├── NewFeature/
-│   ├── index.js
-│   ├── styles.js
-│   └── README.md
-```
-
-#### Nieuwe screens:
-```
-screens/
-├── NewFeatureScreen.js
-└── NewFeatureScreen.styles.js
-```
-
-### 7. **Testing Guidelines**
-
-#### Voor elke feature:
-- [ ] Test op Android emulator
-- [ ] Test op iOS simulator
-- [ ] Test offline functionaliteit
-- [ ] Test error scenarios
-- [ ] Test performance
-
-#### Test checklist:
 ```bash
-# Start Android emulator
-npm run android
+# Status bekijken
+git status
 
-# Start iOS simulator
-npm run ios
+# Wijzigingen bekijken
+git diff
 
-# Test web versie
-npm run web
-```
+# Branch lijst
+git branch -a
 
-### 8. **Deployment**
+# Recente commits
+git log --oneline -10
 
-#### Staging deployment:
-```bash
-# Build voor testing
-expo build:android --release-channel staging
-expo build:ios --release-channel staging
-```
-
-#### Production deployment:
-```bash
-# Build voor production
-expo build:android --release-channel production
-expo build:ios --release-channel production
-```
-
-### 9. **Troubleshooting**
-
-#### Veelvoorkomende problemen:
-
-**Metro bundler errors:**
-```bash
-npm start --reset-cache
-```
-
-**Dependencies issues:**
-```bash
-rm -rf node_modules
-npm install
-```
-
-**Git conflicts:**
-```bash
+# Stash wijzigingen (tijdelijk opslaan)
 git stash
-git pull origin main
 git stash pop
 ```
 
-### 10. **Best Practices**
+### Cursor tips voor team work
 
-#### Code Quality:
-- Gebruik ESLint en Prettier
-- Schrijf duidelijke commit messages
-- Voeg comments toe voor complexe logica
-- Test edge cases
+1. **Git panel gebruiken:** `Ctrl+Shift+G`
+2. **Automatische fetch:** Cursor kan automatisch controleren op updates
+3. **Inline git info:** Cursor toont git status in de status bar
+4. **Branch switcher:** Gebruik Cursor's git integratie om snel branches te wisselen
 
-#### Git Best Practices:
-- Commit regelmatig (minimaal dagelijks)
-- Gebruik feature branches
-- Squash commits voor PR
-- Write meaningful commit messages
+### Troubleshooting
 
-#### Communication:
-- Update team over grote changes
-- Deel progress in team chat
-- Vraag om feedback vroeg
-- Documenteer belangrijke beslissingen
+**"Permission denied" bij push:**
+- Controleer of je toegang hebt tot de repository
+- Vraag admin om je toe te voegen aan het team
 
-### 11. **Tools & Resources**
+**Merge conflicts:**
+- Communiceer met team over welke bestanden je aanpast
+- Los conflicten samen op
 
-#### Development Tools:
-- **Cursor**: Primary IDE
-- **Expo Go**: Mobile testing
-- **GitHub**: Version control
-- **Supabase Dashboard**: Database management
-
-#### Useful Commands:
-```bash
-# Check project status
-git status
-
-# View recent commits
-git log --oneline -10
-
-# Check for updates
-npm outdated
-
-# Clean project
-npm run clean
-```
-
-### 12. **Emergency Procedures**
-
-#### Als iets breekt:
-1. **Don't panic!**
-2. Revert naar laatste working commit
-3. Notify team immediately
-4. Document the issue
-5. Create fix branch
-
-#### Rollback procedure:
-```bash
-# Revert naar laatste working commit
-git revert HEAD
-
-# Of reset naar specifieke commit
-git reset --hard [commit-hash]
-```
-
----
-
-**Remember**: We're a team! Help each other, communicate openly, and have fun building this awesome app together! 🚀 
+**Vergeten te pullen:**
+- Stash je wijzigingen: `git stash`
+- Pull: `git pull origin main`
+- Pop je wijzigingen: `git stash pop` 
