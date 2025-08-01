@@ -20,7 +20,7 @@ Alles gebeurt in een moderne, intuïtieve omgeving die ontworpen is met oog voor
 
 ## 🎯 Onze missie
 
-Deze app is ontwikkeld door **JN Enterprises** met als doel jouw dagelijkse boodschappenplanning slimmer te maken – zonder gedoe. We geloven dat technologie het leven eenvoudiger moet maken, niet ingewikkelder.
+Deze app is ontwikkeld door **Team JuNiX** met als doel jouw dagelijkse boodschappenplanning slimmer te maken – zonder gedoe. We geloven dat technologie het leven eenvoudiger moet maken, niet ingewikkelder.
 
 ## 💡 Perfect voor:
 - Individuele boodschappers
@@ -35,4 +35,4 @@ We hopen dat je er net zo blij van wordt als wij. Veel winkelplezier!
 
 **Versie:** v1.0.0  
 **Platformen:** iOS & Android  
-**Ontwikkeld door:** JN Enterprises 
+**Ontwikkeld door:** Team JuNiX 

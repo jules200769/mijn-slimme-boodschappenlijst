@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, TextInput, FlatList, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, TextInput, FlatList, Alert, KeyboardAvoidingView, Platform, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -493,6 +493,8 @@ export default function GroceryListScreen() {
   // 2. Nieuwe menu-modal component
   const [toonNieuwMenuModal, setToonNieuwMenuModal] = useState(false);
   const [verwijderBevestigingVisible, setVerwijderBevestigingVisible] = useState(false);
+  const menuModalAnimation = new Animated.Value(400);
+  const productModalAnimation = new Animated.Value(800);
 
   // 3. Functies voor menu-opties
   const handleAlleItemsDeselecteren = () => {
@@ -548,6 +550,40 @@ export default function GroceryListScreen() {
       return () => clearInterval(interval);
     }
   }, [toonProductModal, productZoek]);
+
+  // Menu modal animatie
+  useEffect(() => {
+    if (toonNieuwMenuModal) {
+      Animated.timing(menuModalAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(menuModalAnimation, {
+        toValue: 400,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [toonNieuwMenuModal]);
+
+  // Product modal animatie - tijdelijk uitgeschakeld
+  // useEffect(() => {
+  //   if (toonProductModal) {
+  //     Animated.timing(productModalAnimation, {
+  //       toValue: 0,
+  //       duration: 300,
+  //       useNativeDriver: true,
+  //     }).start();
+  //   } else {
+  //     Animated.timing(productModalAnimation, {
+  //       toValue: 800,
+  //       duration: 300,
+  //       useNativeDriver: true,
+  //     }).start();
+  //   }
+  // }, [toonProductModal]);
 
   // Zoekresultaten filteren
   const getZoekResultaten = () => {
@@ -702,45 +738,55 @@ export default function GroceryListScreen() {
 
   // Product toevoegen
   const handleProductToevoegen = async (productNaam) => {
-    if (!geselecteerdeLijst) return;
+    if (!geselecteerdeLijst) return { isDuplicaat: false };
     // Check of product al bestaat in de lijst
     const bestaandProduct = checkProductDuplicaat(productNaam);
     if (bestaandProduct) {
       setDuplicaatProduct(productNaam);
       setToonDuplicaatModal(true);
+      setToonProductModal(false); // Sluit de product modal wanneer duplicaat modal wordt getoond
+      return { isDuplicaat: true };
     } else {
-      const { categorie, emoji } = getProductCategorie(productNaam);
-      const nieuweProduct = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-        naam: productNaam,
-        checked: false,
-        hoeveelheid: '1',
-        eenheid: 'stuks',
-        categorie: categorie,
-        categorieEmoji: emoji,
-      };
-      const nieuweLijst = {
-        ...geselecteerdeLijst,
-        items: [...geselecteerdeLijst.items, nieuweProduct]
-      };
-      // Update in Supabase
-      let error = null;
-      if (geselecteerdeLijst.code) {
-        // Gedeelde lijst
-        ({ error } = await sharedLists.updateSharedList(geselecteerdeLijst.code, { items: nieuweLijst.items }));
-      } else {
-        // Persoonlijke lijst
-        ({ error } = await lists.updateList(geselecteerdeLijst.id, { items: nieuweLijst.items }));
-      }
-      if (!error) {
-        // Update lokale state alleen bij succes
-        const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
-        setLijsten(nieuweLijsten);
-        setGeselecteerdeLijst(nieuweLijst);
-        setToonProductModal(false);
-      } else {
-        Alert.alert('Fout', 'Kon product niet toevoegen');
-      }
+      await handleProductToevoegenDirect(productNaam);
+      return { isDuplicaat: false };
+    }
+  };
+
+  // Functie om product direct toe te voegen zonder duplicaat check
+  const handleProductToevoegenDirect = async (productNaam) => {
+    if (!geselecteerdeLijst) return;
+    
+    const { categorie, emoji } = getProductCategorie(productNaam);
+    const nieuweProduct = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      naam: productNaam,
+      checked: false,
+      hoeveelheid: '1',
+      eenheid: 'stuks',
+      categorie: categorie,
+      categorieEmoji: emoji,
+    };
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: [...geselecteerdeLijst.items, nieuweProduct]
+    };
+    // Update in Supabase
+    let error = null;
+    if (geselecteerdeLijst.code) {
+      // Gedeelde lijst
+      ({ error } = await sharedLists.updateSharedList(geselecteerdeLijst.code, { items: nieuweLijst.items }));
+    } else {
+      // Persoonlijke lijst
+      ({ error } = await lists.updateList(geselecteerdeLijst.id, { items: nieuweLijst.items }));
+    }
+    if (!error) {
+      // Update lokale state alleen bij succes
+      const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
+      setLijsten(nieuweLijsten);
+      setGeselecteerdeLijst(nieuweLijst);
+      setToonProductModal(false);
+    } else {
+      Alert.alert('Fout', 'Kon product niet toevoegen');
     }
   };
 
@@ -1440,7 +1486,7 @@ export default function GroceryListScreen() {
           onRequestClose={() => setToonProductModal(false)}
         >
         <View style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}>
-          <View style={[{ backgroundColor: colors.surface, height: '80%', minHeight: 500, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, width: '100%' }]}>
+          <View style={[{ backgroundColor: colors.surface, height: '90%', minHeight: 600, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, width: '100%' }]}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setToonProductModal(false)}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
@@ -1516,21 +1562,16 @@ export default function GroceryListScreen() {
                                 }
                               : [styles.productOption, { backgroundColor: colors.surface }]
                           ]}
-                                                  onPress={() => {
+                                                  onPress={async () => {
                           if (item.type === 'categorie') {
                             setGekozenCategorie(item.naam);
                             setProductZoek('');
                             setToonZoekResultaten(false);
                           } else {
-                            // Check duplicaat voordat we toevoegen
-                            const bestaandProduct = checkProductDuplicaat(item.naam);
-                            if (bestaandProduct) {
-                              setDuplicaatProduct(item.naam);
-                              setToonDuplicaatModal(true);
-                              setProductZoek('');
-                              setToonZoekResultaten(false);
-                            } else {
-                              handleProductToevoegen(item.naam);
+                            // Voeg product toe (duplicaat check wordt gedaan in handleProductToevoegen)
+                            const result = await handleProductToevoegen(item.naam);
+                            // Alleen de modal sluiten als er geen duplicaat is
+                            if (!result || !result.isDuplicaat) {
                               setProductZoek('');
                               setToonZoekResultaten(false);
                             }
@@ -1561,7 +1602,7 @@ export default function GroceryListScreen() {
                                 <HighlightedText 
                                   text={item.naam}
                                   highlight={productZoek}
-                                  style={styles.productOptionText}
+                                  style={[styles.productOptionText, { color: colors.text }]}
                                   showHighlight={showHighlighting}
                                   colors={colors}
                                 />
@@ -1624,21 +1665,14 @@ export default function GroceryListScreen() {
                     data={(PRODUCT_CATEGORIE_MAPPING[gekozenCategorie] || []).filter(p => p.toLowerCase().includes(productZoek.toLowerCase()))}
                     renderItem={({ item }) => (
                       <TouchableOpacity 
-                        style={styles.productOption}
-                        onPress={() => {
-                          // Check duplicaat voordat we toevoegen
-                          const bestaandProduct = checkProductDuplicaat(item);
-                          if (bestaandProduct) {
-                            setDuplicaatProduct(item);
-                            setToonDuplicaatModal(true);
-                            setToonProductModal(false); // Sluit product modal
-                          } else {
-                            handleProductToevoegen(item);
-                          }
+                        style={[styles.productOption, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}
+                        onPress={async () => {
+                          // Voeg product toe (duplicaat check wordt gedaan in handleProductToevoegen)
+                          await handleProductToevoegen(item);
                         }}
                       >
                         <MaterialCommunityIcons name="plus" size={24} color={colors.textSecondary} />
-                        <Text style={styles.productOptionText}>{item}</Text>
+                        <Text style={[styles.productOptionText, { color: colors.text }]}>{item}</Text>
                       </TouchableOpacity>
                     )}
                     keyExtractor={item => item}
@@ -1654,7 +1688,7 @@ export default function GroceryListScreen() {
         <Modal
           visible={toonProductDetails}
           transparent
-          animationType="slide"
+          animationType="none"
           onRequestClose={() => setToonProductDetails(false)}
         >
         <KeyboardAvoidingView
@@ -1767,7 +1801,7 @@ export default function GroceryListScreen() {
       <Modal
           visible={toonCategorieModal}
           transparent
-        animationType="slide"
+        animationType="none"
           onRequestClose={() => setToonCategorieModal(false)}
         >
         <View style={styles.modalOverlay}>
@@ -1820,7 +1854,7 @@ export default function GroceryListScreen() {
       <Modal
         visible={toonSorteerModal}
           transparent
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setToonSorteerModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -1903,6 +1937,7 @@ export default function GroceryListScreen() {
                 onPress={() => {
                   setToonDuplicaatModal(false);
                   setDuplicaatProduct(null);
+                  setToonProductModal(true); // Open de product modal weer
                 }}
               >
                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.textSecondary }}>
@@ -1917,28 +1952,14 @@ export default function GroceryListScreen() {
                   paddingVertical: 14,
                   alignItems: 'center',
                 }}
-                onPress={() => {
+                onPress={async () => {
                   if (duplicaatProduct) {
-                    // Bepaal categorie voor het product
-                    const { categorie, emoji } = getProductCategorie(duplicaatProduct);
-                    
-                    const nieuweProduct = {
-                      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                      naam: duplicaatProduct,
-                      checked: false,
-                      hoeveelheid: '1',
-                      eenheid: 'stuks',
-                      categorie: categorie,
-                      categorieEmoji: emoji,
-                    };
-                    const nieuweLijst = {
-                      ...geselecteerdeLijst,
-                      items: [...geselecteerdeLijst.items, nieuweProduct]
-                    };
-                    setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
-                    setGeselecteerdeLijst(nieuweLijst);
+                    // Voeg het product toe via de normale functie maar bypass de duplicaat check
+                    await handleProductToevoegenDirect(duplicaatProduct);
                   }
                   setToonDuplicaatModal(false);
+                  setDuplicaatProduct(null);
+                  // Open de product modal niet weer omdat het product al is toegevoegd
                 }}
               >
                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>
@@ -1957,8 +1978,16 @@ export default function GroceryListScreen() {
         animationType="fade"
         onRequestClose={() => setToonMenuModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setToonMenuModal(false)}
+        >
+          <TouchableOpacity 
+            style={[styles.modalContent, { backgroundColor: colors.surface }]} 
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Lijst opties</Text>
               <TouchableOpacity onPress={() => setToonMenuModal(false)}>
@@ -1980,10 +2009,10 @@ export default function GroceryListScreen() {
               <TouchableOpacity style={styles.menuOption} onPress={handleDeleteList}>
                 <MaterialCommunityIcons name="delete" size={24} color={colors.error} />
                 <Text style={[styles.menuOptionText, { color: colors.error }]}>Verwijder lijst</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </View>
-        </View>
-          </View>
       </Modal>
 
       {/* Share List Modal */}
@@ -2050,11 +2079,24 @@ export default function GroceryListScreen() {
       <Modal
         visible={toonNieuwMenuModal}
         transparent
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setToonNieuwMenuModal(false)}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.15)' }}>
-                      <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 32 }}>
+        <TouchableOpacity 
+          style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.15)' }}
+          activeOpacity={1}
+          onPress={() => setToonNieuwMenuModal(false)}
+        >
+          <Animated.View 
+            style={{ 
+              backgroundColor: colors.surface, 
+              borderTopLeftRadius: 24, 
+              borderTopRightRadius: 24, 
+              padding: 20, 
+              paddingBottom: 32,
+              transform: [{ translateY: menuModalAnimation }]
+            }}
+          >
             <View style={{ width: 40, height: 4, backgroundColor: colors.divider, borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
             
             <TouchableOpacity style={{ paddingVertical: 14, flexDirection: 'row', alignItems: 'center' }} onPress={() => { handleShareList(); setToonNieuwMenuModal(false); }}>
@@ -2077,8 +2119,8 @@ export default function GroceryListScreen() {
               <MaterialCommunityIcons name="delete" size={22} color={colors.error} style={{ marginRight: 16 }} />
               <Text style={{ fontSize: 16, color: colors.error }}>Verwijder gekochte artikelen</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Animated.View>
+        </TouchableOpacity>
       </Modal>
 
       {/* Vriendelijke bevestiging voor verwijderen */}
@@ -2293,6 +2335,7 @@ const styles = StyleSheet.create({
   productOptionText: {
     fontSize: 16,
     marginLeft: 16,
+    fontWeight: 'bold',
   },
   menuOptions: {
     flex: 1,

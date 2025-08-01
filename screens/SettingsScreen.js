@@ -81,7 +81,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row}>
-            <Text style={[styles.rowText, { color: colors.text }]}>Tutorial!!</Text>
+                            <Text style={[styles.rowText, { color: colors.text }]}>Tutorial</Text>
             <MaterialCommunityIcons name="school-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
           {/* Uitloggen knop onderaan */}

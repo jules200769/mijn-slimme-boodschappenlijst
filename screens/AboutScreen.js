@@ -87,7 +87,7 @@ export default function AboutScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🎯 Onze missie</Text>
             <Text style={styles.bodyText}>
-              Deze app is ontwikkeld door <Text style={styles.boldText}>JN Enterprises</Text> met als doel jouw dagelijkse boodschappenplanning slimmer te maken – zonder gedoe. We geloven dat technologie het leven eenvoudiger moet maken, niet ingewikkelder.
+              Deze app is ontwikkeld door <Text style={styles.boldText}>Team JuNiX</Text> met als doel jouw dagelijkse boodschappenplanning slimmer te maken – zonder gedoe. We geloven dat technologie het leven eenvoudiger moet maken, niet ingewikkelder.
             </Text>
           </View>
 
@@ -115,7 +115,7 @@ export default function AboutScreen() {
             <View style={styles.footerDivider} />
             <Text style={styles.footerText}>Versie: v1.0.0</Text>
             <Text style={styles.footerText}>Platformen: iOS & Android</Text>
-            <Text style={styles.footerText}>Ontwikkeld door: JN Enterprises</Text>
+            <Text style={styles.footerText}>Ontwikkeld door: Team JuNiX</Text>
           </View>
         </View>
       </ScrollView>
