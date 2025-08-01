@@ -1,36 +1,85 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { sharedLists } from '../lib/supabase';
+import { useTheme } from '../contexts/ThemeContext';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function JoinListModal({ visible, onClose, onJoinSuccess }) {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const [joinCode, setJoinCode] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
 
-  const handleJoinList = async () => {
-    if (!joinCode.trim() || !user) return;
-    
-    setIsLoading(true);
+  const handleJoin = async () => {
+    if (!joinCode.trim()) {
+      Alert.alert('Fout', 'Voer een geldige code in.');
+      return;
+    }
+
+    setIsJoining(true);
     try {
-      const { data, error } = await sharedLists.joinSharedList(joinCode.trim(), user.id);
-      
-      if (error) {
-        console.error('Fout bij joinen lijst:', error);
-        Alert.alert('Fout', 'Kon niet deelnemen aan de lijst. Controleer de code en probeer het opnieuw.');
+      // Controleer of de lijst bestaat
+      const { data: sharedList, error: listError } = await supabase
+        .from('shared_lists')
+        .select('*')
+        .eq('list_code', joinCode.toUpperCase())
+        .single();
+
+      if (listError || !sharedList) {
+        Alert.alert('Fout', 'Ongeldige code. Controleer de code en probeer opnieuw.');
         return;
       }
-      
-      Alert.alert('Succes', 'Je bent toegevoegd aan de lijst!');
+
+      // Controleer of gebruiker al lid is
+      const { data: existingMember } = await supabase
+        .from('shared_lists')
+        .select('*')
+        .eq('list_code', joinCode.toUpperCase())
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingMember) {
+        Alert.alert('Fout', 'Je bent al lid van deze lijst.');
+        return;
+      }
+
+      // Voeg gebruiker toe aan de gedeelde lijst
+      const { error: joinError } = await supabase
+        .from('shared_lists')
+        .insert({
+          list_code: joinCode.toUpperCase(),
+          list_id: sharedList.list_id,
+          user_id: user.id,
+          is_owner: false,
+          created_at: new Date().toISOString()
+        });
+
+      if (joinError) {
+        console.error('Error joining list:', joinError);
+        Alert.alert('Fout', 'Kon niet toetreden tot de lijst. Probeer het opnieuw.');
+        return;
+      }
+
+      Alert.alert('Succes', 'Je bent succesvol toegetreden tot de lijst!');
       setJoinCode('');
-      onJoinSuccess?.();
       onClose();
+      if (onJoinSuccess) {
+        onJoinSuccess();
+      }
     } catch (error) {
-      console.error('Fout bij joinen lijst:', error);
+      console.error('Error joining list:', error);
       Alert.alert('Fout', 'Er is een fout opgetreden. Probeer het opnieuw.');
     } finally {
-      setIsLoading(false);
+      setIsJoining(false);
     }
   };
 
@@ -38,45 +87,44 @@ export default function JoinListModal({ visible, onClose, onJoinSuccess }) {
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Join lijst</Text>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Join lijst</Text>
             <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color="#666" />
+              <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.content}>
-            <Text style={styles.description}>
-              Voer de deelcode in om deel te nemen aan een lijst
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              Voer de deelcode in om toe te treden tot een gedeelde lijst:
             </Text>
-            
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.codeInput}
-                placeholder="Voer code in..."
-                value={joinCode}
-                onChangeText={setJoinCode}
-                autoCapitalize="characters"
-                maxLength={6}
-                autoFocus
-              />
-            </View>
-            
+
+            <TextInput
+              style={[styles.codeInput, { 
+                backgroundColor: colors.background, 
+                borderColor: colors.divider,
+                color: colors.text
+              }]}
+              placeholder="Voer de 6-cijferige code in"
+              placeholderTextColor={colors.textTertiary}
+              value={joinCode}
+              onChangeText={setJoinCode}
+              autoCapitalize="characters"
+              maxLength={6}
+            />
+
             <TouchableOpacity
-              style={[
-                styles.joinButton,
-                (!joinCode.trim() || isLoading) && styles.joinButtonDisabled
-              ]}
-              onPress={handleJoinList}
-              disabled={!joinCode.trim() || isLoading}
+              style={[styles.joinButton, { backgroundColor: colors.primary }]}
+              onPress={handleJoin}
+              disabled={isJoining}
             >
               <Text style={styles.joinButtonText}>
-                {isLoading ? 'Deelnemen...' : 'Deelnemen'}
+                {isJoining ? 'Toetreden...' : 'Toetreden tot lijst'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -87,68 +135,55 @@ export default function JoinListModal({ visible, onClose, onJoinSuccess }) {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modal: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
-    margin: 20,
+  modalContent: {
     width: '90%',
     maxWidth: 400,
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
   },
-  header: {
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  title: {
-    fontSize: 20,
+  modalTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#222',
   },
   content: {
-    alignItems: 'center',
+    padding: 20,
   },
   description: {
     fontSize: 16,
-    color: '#666',
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 20,
   },
   codeInput: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 16,
     fontSize: 18,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 20,
     textAlign: 'center',
     letterSpacing: 2,
-    fontWeight: 'bold',
   },
   joinButton: {
-    backgroundColor: '#4caf50',
     borderRadius: 12,
     paddingVertical: 16,
-    paddingHorizontal: 32,
     alignItems: 'center',
-    minWidth: 200,
-  },
-  joinButtonDisabled: {
-    backgroundColor: '#bdbdbd',
   },
   joinButtonText: {
     color: '#fff',

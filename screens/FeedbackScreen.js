@@ -14,11 +14,13 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
 
 export default function FeedbackScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [rating, setRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +42,7 @@ export default function FeedbackScreen() {
           <MaterialCommunityIcons
             name={i <= rating ? "star" : "star-outline"}
             size={32}
-            color={i <= rating ? "#FFD700" : "#ccc"}
+            color={i <= rating ? "#FFD700" : colors.textTertiary}
           />
         </TouchableOpacity>
       );
@@ -90,20 +92,20 @@ export default function FeedbackScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}>
           <TouchableOpacity 
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#333" />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Feedback geven</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Feedback geven</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -111,12 +113,12 @@ export default function FeedbackScreen() {
         <View style={styles.content}>
           {/* Sterren Rating */}
           <View style={styles.ratingSection}>
-            <Text style={styles.sectionTitle}>Hoe waardeer je de app?</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Hoe waardeer je de app?</Text>
             <View style={styles.starsContainer}>
               {renderStars()}
             </View>
             {rating > 0 && (
-              <Text style={styles.ratingText}>
+              <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
                 {rating === 1 ? 'Zeer slecht' : 
                  rating === 2 ? 'Slecht' : 
                  rating === 3 ? 'Gemiddeld' : 
@@ -127,10 +129,15 @@ export default function FeedbackScreen() {
 
           {/* Feedback Tekst */}
           <View style={styles.textSection}>
-            <Text style={styles.sectionTitle}>Jouw feedback (optioneel)</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Jouw feedback (optioneel)</Text>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { 
+                backgroundColor: colors.surface, 
+                borderColor: colors.border,
+                color: colors.text
+              }]}
               placeholder="Deel je ervaringen, suggesties of problemen..."
+              placeholderTextColor={colors.textSecondary}
               value={feedbackText}
               onChangeText={setFeedbackText}
               multiline
@@ -143,13 +150,14 @@ export default function FeedbackScreen() {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              (rating === 0 && feedbackText.trim() === '') && styles.submitButtonDisabled
+              { backgroundColor: colors.success },
+              (rating === 0 && feedbackText.trim() === '') && { backgroundColor: colors.textTertiary }
             ]}
             onPress={handleSubmit}
             disabled={isSubmitting || (rating === 0 && feedbackText.trim() === '')}
           >
             {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.surface} />
             ) : (
               <Text style={styles.submitButtonText}>Versturen</Text>
             )}
@@ -164,9 +172,9 @@ export default function FeedbackScreen() {
         animationType="fade"
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.thankYouContainer}>
-            <MaterialCommunityIcons name="check-circle" size={48} color="#4CAF50" />
-            <Text style={styles.thankYouText}>Bedankt voor je feedback!</Text>
+          <View style={[styles.thankYouContainer, { backgroundColor: colors.surface }]}>
+            <MaterialCommunityIcons name="check-circle" size={48} color={colors.success} />
+            <Text style={[styles.thankYouText, { color: colors.text }]}>Bedankt voor je feedback!</Text>
           </View>
         </View>
       </Modal>
@@ -177,7 +185,6 @@ export default function FeedbackScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
   },
   scrollContent: {
     flexGrow: 1,
@@ -188,9 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   backButton: {
     padding: 8,
@@ -198,7 +203,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   placeholder: {
     width: 40,
@@ -213,7 +217,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -227,7 +230,6 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 14,
-    color: '#666',
     textAlign: 'center',
   },
   textSection: {
@@ -235,22 +237,16 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    backgroundColor: '#fff',
     minHeight: 120,
   },
   submitButton: {
-    backgroundColor: '#4CAF50',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 8,
     alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#ccc',
   },
   submitButtonText: {
     color: '#fff',
@@ -264,7 +260,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   thankYouContainer: {
-    backgroundColor: '#fff',
     padding: 32,
     borderRadius: 12,
     alignItems: 'center',
@@ -277,7 +272,6 @@ const styles = StyleSheet.create({
   thankYouText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginTop: 16,
     textAlign: 'center',
   },

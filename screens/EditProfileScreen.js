@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
 export default function EditProfileScreen({ navigation }) {
   const { user, signOut } = useAuth();
+  const { colors } = useTheme();
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -44,52 +46,52 @@ export default function EditProfileScreen({ navigation }) {
   const displayName = user?.name || user?.user_metadata?.name || 'naam van profiel';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f7f7' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: 0 }}>
         {/* Header met terugknop en titel */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
+            <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Account</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Account</Text>
           <View style={{ width: 28 }} />
         </View>
         {/* Profielcirkel en naam */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileCircle}>
-            <Text style={styles.profileInitial}>
+        <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
+          <View style={[styles.profileCircle, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.profileInitial, { color: colors.primary }]}>
               {displayName[0]?.toUpperCase() || '?'}
             </Text>
           </View>
-          <Text style={styles.profileName}>
+          <Text style={[styles.profileName, { color: colors.text }]}>
             {`"${displayName}"`}
           </Text>
         </View>
         {/* Witte kaart met opties */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EditName')}>
-            <Text style={styles.rowText}>Naam bewerken</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Naam bewerken</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EditEmail')}>
-            <Text style={styles.rowText}>Wijzig e-mailadres</Text>
-            <Text style={styles.currentEmail}>{user?.email || ''}</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Wijzig e-mailadres</Text>
+            <Text style={[styles.currentEmail, { color: colors.textSecondary }]}>{user?.email || ''}</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EditPassword')}>
-            <Text style={styles.rowText}>Wijzig wachtwoord</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#bbb" />
+            <Text style={[styles.rowText, { color: colors.text }]}>Wijzig wachtwoord</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={signOut}>
-            <Text style={[styles.rowText, { color: '#e53935' }]}>Uitloggen</Text>
-            <MaterialCommunityIcons name="logout" size={24} color="#e53935" />
+            <Text style={[styles.rowText, { color: colors.error }]}>Uitloggen</Text>
+            <MaterialCommunityIcons name="logout" size={24} color={colors.error} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.deleteAccount} onPress={handleDeleteAccount}>
-          <Text style={styles.deleteAccountText}>verwijder account</Text>
+          <Text style={[styles.deleteAccountText, { color: colors.textSecondary }]}>verwijder account</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -104,24 +106,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 8,
-    backgroundColor: '#f7f7f7',
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#222',
   },
   profileHeader: {
     alignItems: 'center',
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: '#f7f7f7',
   },
   profileCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e0e0ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -129,15 +127,12 @@ const styles = StyleSheet.create({
   profileInitial: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#7c4dff',
   },
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   card: {
-    backgroundColor: '#fff',
     borderRadius: 18,
     marginHorizontal: 16,
     marginBottom: 16,
@@ -159,12 +154,10 @@ const styles = StyleSheet.create({
   },
   rowText: {
     fontSize: 16,
-    color: '#222',
     fontWeight: 'bold',
   },
   divider: {
     height: 1,
-    backgroundColor: '#f0f0f0',
     marginLeft: 20,
   },
   deleteAccount: {
@@ -173,12 +166,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   deleteAccountText: {
-    color: '#888',
     fontSize: 15,
     textDecorationLine: 'underline',
   },
   currentEmail: {
-    color: '#bbb',
     fontSize: 13,
     marginRight: 8,
     marginLeft: 8,

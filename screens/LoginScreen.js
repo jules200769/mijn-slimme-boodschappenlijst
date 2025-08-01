@@ -129,7 +129,16 @@ const LoginScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
-              theme={{ colors: { primary: colors.primary } }}
+              theme={{ 
+                colors: { 
+                  primary: colors.primary,
+                  background: colors.surface,
+                  surface: colors.surface,
+                  text: colors.text,
+                  placeholder: colors.textSecondary,
+                  onSurface: colors.text
+                } 
+              }}
             />
 
             <TextInput
@@ -139,7 +148,16 @@ const LoginScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
-              theme={{ colors: { primary: colors.primary } }}
+              theme={{ 
+                colors: { 
+                  primary: colors.primary,
+                  background: colors.surface,
+                  surface: colors.surface,
+                  text: colors.text,
+                  placeholder: colors.textSecondary,
+                  onSurface: colors.text
+                } 
+              }}
             />
             {/* Automatisch inloggen switch */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>

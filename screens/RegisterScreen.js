@@ -86,7 +86,16 @@ const RegisterScreen = ({ navigation }) => {
               onChangeText={setName}
               mode="outlined"
               style={styles.input}
-              theme={{ colors: { primary: colors.primary } }}
+              theme={{ 
+                colors: { 
+                  primary: colors.primary,
+                  background: colors.surface,
+                  surface: colors.surface,
+                  text: colors.text,
+                  placeholder: colors.textSecondary,
+                  onSurface: colors.text
+                } 
+              }}
             />
 
             <TextInput
@@ -97,7 +106,16 @@ const RegisterScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
-              theme={{ colors: { primary: colors.primary } }}
+              theme={{ 
+                colors: { 
+                  primary: colors.primary,
+                  background: colors.surface,
+                  surface: colors.surface,
+                  text: colors.text,
+                  placeholder: colors.textSecondary,
+                  onSurface: colors.text
+                } 
+              }}
             />
 
             <TextInput
@@ -107,7 +125,16 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
-              theme={{ colors: { primary: colors.primary } }}
+              theme={{ 
+                colors: { 
+                  primary: colors.primary,
+                  background: colors.surface,
+                  surface: colors.surface,
+                  text: colors.text,
+                  placeholder: colors.textSecondary,
+                  onSurface: colors.text
+                } 
+              }}
             />
 
             <TextInput
@@ -117,7 +144,16 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
-              theme={{ colors: { primary: colors.primary } }}
+              theme={{ 
+                colors: { 
+                  primary: colors.primary,
+                  background: colors.surface,
+                  surface: colors.surface,
+                  text: colors.text,
+                  placeholder: colors.textSecondary,
+                  onSurface: colors.text
+                } 
+              }}
             />
 
             <Button

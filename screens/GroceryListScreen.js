@@ -8,24 +8,22 @@ import ShareListModal from '../components/ShareListModal';
 import ViewMembersModal from '../components/ViewMembersModal';
 import JoinListModal from '../components/JoinListModal';
 
-// HighlightedText component voor het markeren van zoektermen
-const HighlightedText = ({ text, highlight, style, showHighlight = true }) => {
-  if (!highlight.trim() || !showHighlight) {
+// HighlightedText component aanpassen
+const HighlightedText = ({ text, highlight, style, showHighlight = true, colors }) => {
+  if (!showHighlight || !highlight) {
     return <Text style={style}>{text}</Text>;
   }
 
-  const regex = new RegExp(`(${highlight})`, 'gi');
-  const parts = text.split(regex);
-
+  const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
   return (
     <Text style={style}>
       {parts.map((part, index) => 
-        regex.test(part) ? (
-          <Text key={index} style={[style, { backgroundColor: '#ffeb3b', fontWeight: 'bold' }]}>
+        part.toLowerCase() === highlight.toLowerCase() ? (
+          <Text key={index} style={[style, { backgroundColor: colors?.primaryLight || '#e3f2fd', fontWeight: 'bold' }]}>
             {part}
           </Text>
         ) : (
-          <Text key={index}>{part}</Text>
+          part
         )
       )}
     </Text>
@@ -46,6 +44,26 @@ const POPULAIRE_PRODUCTEN = [
   'Peper', 'Kruidenmix', 'Olijfolie', 'Zonnebloemolie', 'Azijn', 'Sojasaus', 'Ketchup', 'Mayonaise', 'Mosterd', 'Satésaus',
   'Chips', 'Nootjes', 'Popcorn', 'Koekjes', 'Ontbijtkoek', 'Muesli', 'Cornflakes', 'Crackers', 'Wasa', 'Beschuit',
   'Thee', 'Koffie', 'Frisdrank', 'Sinaasappelsap', 'Appelsap', 'Bier', 'Wijn', 'Water', 'IJs', 'Pizza',
+  // Nieuwe producten (100 extra)
+  'Kiwi', 'Grapefruit', 'Nectarines', 'Abrikozen', 'Pruimen', 'Kersen', 'Bramen', 'Kruisbessen', 'Vijgen', 'Granaatappel',
+  'Lychee', 'Passievrucht', 'Guave', 'Papaya', 'Kokosnoot', 'Dragonfruit', 'Starfruit', 'Rambutan', 'Mangosteen', 'Longan',
+  'Asperges', 'Artisjok', 'Bleekselderij', 'Rode bieten', 'Radijs', 'Rettich', 'Paksoi', 'Bok choy', 'Koolrabi', 'Snijbiet',
+  'Rucola', 'Waterkers', 'Postelein', 'Veldsla', 'Kropsla', 'Ijsbergsla', 'Romaine sla', 'Endive', 'Witlof', 'Andijvie',
+  'Pompoen', 'Butternut squash', 'Patisson', 'Courgette geel', 'Aubergine paars', 'Aubergine wit', 'Tomatillos', 'Okra', 'Bamboescheuten', 'Lotuswortel',
+  'Runderlappen', 'Varkenshaas', 'Lamsvlees', 'Kalkoenfilet', 'Eend', 'Gans', 'Konijn', 'Wild zwijn', 'Hertenvlees', 'Kwartel',
+  'Forel', 'Heilbot', 'Koolvis', 'Sardines', 'Ansjovis', 'Oesters', 'Mosselen', 'Kreeft', 'Krab', 'Kreeftenstaart',
+  'Gouda', 'Edammer', 'Brie', 'Camembert', 'Feta', 'Parmezaan', 'Mozzarella', 'Cheddar', 'Gorgonzola', 'Roquefort',
+  'Karnemelk', 'Kefir', 'Kwark', 'Skyr', 'Griekse yoghurt', 'Bulgaarse yoghurt', 'Kokosyoghurt', 'Amandelmelk', 'Havermelk', 'Sojamelk',
+  'Cola', 'Sprite', 'Fanta', '7-Up', 'Pepsi', 'Dr Pepper', 'Mountain Dew', 'Red Bull', 'Monster', 'Rockstar',
+  'Limonade', 'Ice tea', 'Vruchtensap', 'Groentesap', 'Smoothie', 'Milkshake', 'Hot chocolate', 'Espresso', 'Cappuccino', 'Latte',
+  'Bitterballen', 'Kroketten', 'Frikandel', 'Bamischijf', 'Kaassoufflé', 'Nasischijf', 'Loempia', 'Springroll', 'Dim sum', 'Sushi',
+  'Marshmallows', 'Liquorice', 'Winegums', 'Toffees', 'Caramels', 'Chocolade', 'M&M\'s', 'Skittles', 'Haribo', 'Stroopwafels',
+  'Speculaas', 'Gevulde koek', 'Boterkoek', 'Appeltaart', 'Cheesecake', 'Tiramisu', 'Chocolademousse', 'IJscoupe', 'Sorbet', 'Frozen yoghurt',
+  'Basilicum', 'Oregano', 'Tijm', 'Rozemarijn', 'Salie', 'Laurier', 'Kurkuma', 'Gember', 'Kaneel', 'Nootmuskaat',
+  'Chilipepers', 'Jalapeños', 'Habanero', 'Poblano', 'Serrano', 'Cayenne', 'Paprika poeder', 'Curry', 'Garam masala', 'Ras el hanout',
+  'Kikkererwten', 'Linzen', 'Kidneybonen', 'Zwarte bonen', 'Witte bonen', 'Bruine bonen', 'Spliterwten', 'Kapucijners', 'Doperwten', 'Bonen',
+  'Quinoa', 'Bulgur', 'Couscous', 'Farro', 'Freekeh', 'Spelt', 'Haver', 'Gerst', 'Rogge', 'Teff',
+  'Pannenkoekenmix', 'Wafelmix', 'Cakemix', 'Brownie mix', 'Muffin mix', 'Pizza mix', 'Bread mix', 'Pasta mix', 'Risotto mix', 'Soep mix',
 ];
 
 const CATEGORIEEN = [
@@ -70,14 +88,22 @@ const CATEGORIE_GRID = [
   { naam: 'Fruit', emoji: '🍎' },
   { naam: 'Groente', emoji: '🥦' },
   { naam: 'Brood & Bakkerij', emoji: '🍞' },
-  { naam: 'Vlees & Vis', emoji: '🥩' },
-  { naam: 'Zuivel & Eieren', emoji: '🧀' },
-  { naam: 'Dranken', emoji: '🥤' },
-  { naam: 'Snacks & Koek', emoji: '🍪' },
+  { naam: 'Broodbeleg', emoji: '🥪' },
+  { naam: 'Vlees', emoji: '🥩' },
+  { naam: 'Vis', emoji: '🐟' },
+  { naam: 'Zuivel', emoji: '🥛' },
+  { naam: 'Vleeswaren', emoji: '🥓' },
+  { naam: 'Frisdrank', emoji: '🥤' },
+  { naam: 'Alcoholische dranken', emoji: '🍷' },
+  { naam: 'Warme dranken', emoji: '☕' },
+  { naam: 'Chips & Nootjes', emoji: '🥜' },
+  { naam: 'Snoep & Koek', emoji: '🍬' },
   { naam: 'Diepvries', emoji: '🧊' },
   { naam: 'Ontbijtgranen', emoji: '🥣' },
   { naam: 'Kruiden & Sauzen', emoji: '🧂' },
+  { naam: 'Droge producten', emoji: '🌾' },
   { naam: 'Conserven', emoji: '🥫' },
+  { naam: 'Rijst & Pasta', emoji: '🍚' },
   { naam: 'Overig', emoji: '🛒' },
 ];
 
@@ -85,24 +111,53 @@ const CATEGORIE_GRID = [
 const PRODUCT_CATEGORIE_MAPPING = {
   'Fruit': [
     'Appels', 'Bananen', 'Sinaasappels', 'Mandarijnen', 'Peren', 'Druiven', 'Aardbeien', 'Blauwe bessen', 'Frambozen', 'Watermeloen', 'Citroen', 'Limoen', 'Ananas', 'Mango',
+    'Kiwi', 'Grapefruit', 'Nectarines', 'Abrikozen', 'Pruimen', 'Kersen', 'Bramen', 'Kruisbessen', 'Vijgen', 'Granaatappel',
+    'Lychee', 'Passievrucht', 'Guave', 'Papaya', 'Kokosnoot', 'Dragonfruit', 'Starfruit', 'Rambutan', 'Mangosteen', 'Longan',
   ],
   'Groente': [
     'Tomaten', 'Komkommer', 'Paprika', 'Wortels', 'Uien', 'Knoflook', 'Sla', 'Spinazie', 'Courgette', 'Aubergine', 'Prei', 'Boontjes', 'Bloemkool', 'Broccoli', 'Spruitjes', 'Champignons', 'Avocado',
+    'Asperges', 'Artisjok', 'Bleekselderij', 'Rode bieten', 'Radijs', 'Rettich', 'Paksoi', 'Bok choy', 'Koolrabi', 'Snijbiet',
+    'Rucola', 'Waterkers', 'Postelein', 'Veldsla', 'Kropsla', 'Ijsbergsla', 'Romaine sla', 'Endive', 'Witlof', 'Andijvie',
+    'Pompoen', 'Butternut squash', 'Patisson', 'Courgette geel', 'Aubergine paars', 'Aubergine wit', 'Tomatillos', 'Okra', 'Bamboescheuten', 'Lotuswortel',
   ],
   'Brood & Bakkerij': [
-    'Brood', 'Ontbijtkoek', 'Crackers', 'Wasa', 'Beschuit', 'Muesli', 'Cornflakes',
+    'Brood', 'Ontbijtkoek', 'Crackers', 'Wasa', 'Beschuit',
+    'Pannenkoekenmix', 'Wafelmix', 'Cakemix', 'Brownie mix', 'Muffin mix', 'Pizza mix', 'Bread mix', 'Pasta mix', 'Risotto mix', 'Soep mix',
   ],
-  'Vlees & Vis': [
-    'Kip', 'Rundergehakt', 'Varkenshaas', 'Zalm', 'Tonijn', 'Garnalen', 'Haring', 'Makreel', 'Kabeljauw', 'Vissticks', 'Ham', 'Salami', 'Kipfilet (beleg)', 'Rookworst',
+  'Broodbeleg': [
+    'Pindakaas', 'Hagelslag', 'Jam', 'Honing', 'Chocoladepasta', 'Boter', 'Margarine', 'Roomkaas', 'Hüttenkäse', 'Crème fraîche',
   ],
-  'Zuivel & Eieren': [
-    'Melk', 'Kaas', 'Eieren', 'Yoghurt', 'Boter', 'Margarine', 'Roomkaas', 'Hüttenkäse', 'Crème fraîche', 'Slagroom',
+  'Vlees': [
+    'Kip', 'Rundergehakt', 'Varkenshaas', 'Runderlappen', 'Lamsvlees', 'Kalkoenfilet', 'Eend', 'Gans', 'Konijn', 'Wild zwijn', 'Hertenvlees', 'Kwartel',
   ],
-  'Dranken': [
-    'Thee', 'Koffie', 'Frisdrank', 'Sinaasappelsap', 'Appelsap', 'Bier', 'Wijn', 'Water',
+  'Vis': [
+    'Zalm', 'Tonijn', 'Garnalen', 'Haring', 'Makreel', 'Kabeljauw', 'Vissticks', 'Forel', 'Heilbot', 'Koolvis', 'Sardines', 'Ansjovis', 'Oesters', 'Mosselen', 'Kreeft', 'Krab', 'Kreeftenstaart',
   ],
-  'Snacks & Koek': [
-    'Chips', 'Nootjes', 'Popcorn', 'Koekjes', 'Chocoladepasta', 'Pindakaas', 'Hagelslag', 'Jam', 'Honing',
+  'Zuivel': [
+    'Melk', 'Kaas', 'Eieren', 'Yoghurt', 'Slagroom',
+    'Gouda', 'Edammer', 'Brie', 'Camembert', 'Feta', 'Parmezaan', 'Mozzarella', 'Cheddar', 'Gorgonzola', 'Roquefort',
+    'Karnemelk', 'Kefir', 'Kwark', 'Skyr', 'Griekse yoghurt', 'Bulgaarse yoghurt', 'Kokosyoghurt', 'Amandelmelk', 'Havermelk', 'Sojamelk',
+  ],
+  'Vleeswaren': [
+    'Ham', 'Salami', 'Kipfilet (beleg)', 'Rookworst',
+  ],
+  'Frisdrank': [
+    'Frisdrank', 'Sinaasappelsap', 'Appelsap', 'Water',
+    'Cola', 'Sprite', 'Fanta', '7-Up', 'Pepsi', 'Dr Pepper', 'Mountain Dew', 'Red Bull', 'Monster', 'Rockstar',
+    'Limonade', 'Ice tea', 'Vruchtensap', 'Groentesap', 'Smoothie', 'Milkshake',
+  ],
+  'Alcoholische dranken': [
+    'Bier', 'Wijn',
+  ],
+  'Warme dranken': [
+    'Thee', 'Koffie', 'Hot chocolate', 'Espresso', 'Cappuccino', 'Latte',
+  ],
+  'Chips & Nootjes': [
+    'Chips', 'Nootjes', 'Popcorn',
+  ],
+  'Snoep & Koek': [
+    'Koekjes', 'Marshmallows', 'Liquorice', 'Winegums', 'Toffees', 'Caramels', 'Chocolade', 'M&M\'s', 'Skittles', 'Haribo', 'Stroopwafels',
+    'Speculaas', 'Gevulde koek', 'Boterkoek', 'Appeltaart', 'Cheesecake', 'Tiramisu', 'Chocolademousse', 'IJscoupe', 'Sorbet', 'Frozen yoghurt',
   ],
   'Diepvries': [
     'IJs', 'Pizza',
@@ -112,12 +167,21 @@ const PRODUCT_CATEGORIE_MAPPING = {
   ],
   'Kruiden & Sauzen': [
     'Peper', 'Kruidenmix', 'Olijfolie', 'Zonnebloemolie', 'Azijn', 'Sojasaus', 'Ketchup', 'Mayonaise', 'Mosterd', 'Satésaus',
+    'Basilicum', 'Oregano', 'Tijm', 'Rozemarijn', 'Salie', 'Laurier', 'Kurkuma', 'Gember', 'Kaneel', 'Nootmuskaat',
+    'Chilipepers', 'Jalapeños', 'Habanero', 'Poblano', 'Serrano', 'Cayenne', 'Paprika poeder', 'Curry', 'Garam masala', 'Ras el hanout',
+  ],
+  'Droge producten': [
+    'Bloem', 'Bakpoeder', 'Vanillesuiker', 'Suiker', 'Zout',
+    'Quinoa', 'Bulgur', 'Couscous', 'Farro', 'Freekeh', 'Spelt', 'Gerst', 'Rogge', 'Teff',
   ],
   'Conserven': [
-    'Bloem', 'Bakpoeder', 'Vanillesuiker', 'Suiker', 'Zout',
+    'Kikkererwten', 'Linzen', 'Kidneybonen', 'Zwarte bonen', 'Witte bonen', 'Bruine bonen', 'Spliterwten', 'Kapucijners', 'Doperwten', 'Bonen',
+  ],
+  'Rijst & Pasta': [
+    'Rijst', 'Pasta',
   ],
   'Overig': [
-    'Rijst', 'Pasta',
+    'Bitterballen', 'Kroketten', 'Frikandel', 'Bamischijf', 'Kaassoufflé', 'Nasischijf', 'Loempia', 'Springroll', 'Dim sum', 'Sushi',
   ],
 };
 
@@ -538,38 +602,68 @@ export default function GroceryListScreen() {
     const naam = productNaam.toLowerCase();
     
     // Fruit
-    if (['appels', 'bananen', 'sinaasappels', 'mandarijnen', 'peren', 'druiven', 'aardbeien', 'blauwe bessen', 'frambozen', 'watermeloen', 'citroen', 'limoen', 'ananas', 'mango'].includes(naam)) {
+    if (['appels', 'bananen', 'sinaasappels', 'mandarijnen', 'peren', 'druiven', 'aardbeien', 'blauwe bessen', 'frambozen', 'watermeloen', 'citroen', 'limoen', 'ananas', 'mango', 'kiwi', 'grapefruit', 'nectarines', 'abrikozen', 'pruimen', 'kersen', 'bramen', 'kruisbessen', 'vijgen', 'granaatappel', 'lychee', 'passievrucht', 'guave', 'papaya', 'kokosnoot', 'dragonfruit', 'starfruit', 'rambutan', 'mangosteen', 'longan'].includes(naam)) {
       return { categorie: 'Fruit', emoji: '🍎' };
     }
     
     // Groente
-    if (['tomaten', 'komkommer', 'paprika', 'wortels', 'uien', 'knoflook', 'sla', 'spinazie', 'courgette', 'aubergine', 'prei', 'boontjes', 'bloemkool', 'broccoli', 'spruitjes', 'champignons', 'avocado'].includes(naam)) {
+    if (['tomaten', 'komkommer', 'paprika', 'wortels', 'uien', 'knoflook', 'sla', 'spinazie', 'courgette', 'aubergine', 'prei', 'boontjes', 'bloemkool', 'broccoli', 'spruitjes', 'champignons', 'avocado', 'asperges', 'artisjok', 'bleekselderij', 'rode bieten', 'radijs', 'rettich', 'paksoi', 'bok choy', 'koolrabi', 'snijbiet', 'rucola', 'waterkers', 'postelein', 'veldsla', 'kropsla', 'ijsbergsla', 'romaine sla', 'endive', 'witlof', 'andijvie', 'pompoen', 'butternut squash', 'patisson', 'courgette geel', 'aubergine paars', 'aubergine wit', 'tomatillos', 'okra', 'bamboescheuten', 'lotuswortel'].includes(naam)) {
       return { categorie: 'Groente', emoji: '🥦' };
     }
     
     // Brood & Bakkerij
-    if (['brood', 'ontbijtkoek', 'crackers', 'wasa', 'beschuit', 'muesli', 'cornflakes'].includes(naam)) {
+    if (['brood', 'ontbijtkoek', 'crackers', 'wasa', 'beschuit', 'pannenkoekenmix', 'wafelmix', 'cakemix', 'brownie mix', 'muffin mix', 'pizza mix', 'bread mix', 'pasta mix', 'risotto mix', 'soep mix'].includes(naam)) {
       return { categorie: 'Brood & Bakkerij', emoji: '🍞' };
     }
     
-    // Vlees & Vis
-    if (['kip', 'rundergehakt', 'varkenshaas', 'zalm', 'tonijn', 'garnalen', 'haring', 'makreel', 'kabeljauw', 'vissticks', 'ham', 'salami', 'kipfilet (beleg)', 'rookworst'].includes(naam)) {
-      return { categorie: 'Vlees & Vis', emoji: '🥩' };
+    // Broodbeleg
+    if (['pindakaas', 'hagelslag', 'jam', 'honing', 'chocoladepasta', 'boter', 'margarine', 'roomkaas', 'hüttenkäse', 'crème fraîche'].includes(naam)) {
+      return { categorie: 'Broodbeleg', emoji: '🥪' };
     }
     
-    // Zuivel & Eieren
-    if (['melk', 'kaas', 'eieren', 'yoghurt', 'boter', 'margarine', 'roomkaas', 'hüttenkäse', 'crème fraîche', 'slagroom'].includes(naam)) {
-      return { categorie: 'Zuivel & Eieren', emoji: '🧀' };
+    // Vlees
+    if (['kip', 'rundergehakt', 'varkenshaas', 'runderlappen', 'lamsvlees', 'kalkoenfilet', 'eend', 'gans', 'konijn', 'wild zwijn', 'hertenvlees', 'kwartel'].includes(naam)) {
+      return { categorie: 'Vlees', emoji: '🥩' };
     }
     
-    // Dranken
-    if (['thee', 'koffie', 'frisdrank', 'sinaasappelsap', 'appelsap', 'bier', 'wijn', 'water'].includes(naam)) {
-      return { categorie: 'Dranken', emoji: '🥤' };
+    // Vis
+    if (['zalm', 'tonijn', 'garnalen', 'haring', 'makreel', 'kabeljauw', 'vissticks', 'forel', 'heilbot', 'koolvis', 'sardines', 'ansjovis', 'oesters', 'mosselen', 'kreeft', 'krab', 'kreeftenstaart'].includes(naam)) {
+      return { categorie: 'Vis', emoji: '🐟' };
     }
     
-    // Snacks & Koek
-    if (['chips', 'nootjes', 'popcorn', 'koekjes', 'chocoladepasta', 'pindakaas', 'hagelslag', 'jam', 'honing'].includes(naam)) {
-      return { categorie: 'Snacks & Koek', emoji: '🍪' };
+    // Zuivel
+    if (['melk', 'kaas', 'eieren', 'yoghurt', 'slagroom', 'gouda', 'edammer', 'brie', 'camembert', 'feta', 'parmezaan', 'mozzarella', 'cheddar', 'gorgonzola', 'roquefort', 'karnemelk', 'kefir', 'kwark', 'skyr', 'griekse yoghurt', 'bulgaarse yoghurt', 'kokosyoghurt', 'amandelmelk', 'havermelk', 'sojamelk'].includes(naam)) {
+      return { categorie: 'Zuivel', emoji: '🥛' };
+    }
+    
+    // Vleeswaren
+    if (['ham', 'salami', 'kipfilet (beleg)', 'rookworst'].includes(naam)) {
+      return { categorie: 'Vleeswaren', emoji: '🥓' };
+    }
+    
+    // Frisdrank
+    if (['frisdrank', 'sinaasappelsap', 'appelsap', 'water', 'cola', 'sprite', 'fanta', '7-up', 'pepsi', 'dr pepper', 'mountain dew', 'red bull', 'monster', 'rockstar', 'limonade', 'ice tea', 'vruchtensap', 'groentesap', 'smoothie', 'milkshake'].includes(naam)) {
+      return { categorie: 'Frisdrank', emoji: '🥤' };
+    }
+    
+    // Alcoholische dranken
+    if (['bier', 'wijn'].includes(naam)) {
+      return { categorie: 'Alcoholische dranken', emoji: '🍷' };
+    }
+    
+    // Warme dranken
+    if (['thee', 'koffie', 'hot chocolate', 'espresso', 'cappuccino', 'latte'].includes(naam)) {
+      return { categorie: 'Warme dranken', emoji: '☕' };
+    }
+    
+    // Chips & Nootjes
+    if (['chips', 'nootjes', 'popcorn'].includes(naam)) {
+      return { categorie: 'Chips & Nootjes', emoji: '🥜' };
+    }
+    
+    // Snoep & Koek
+    if (['koekjes', 'marshmallows', 'liquorice', 'winegums', 'toffees', 'caramels', 'chocolade', 'm&m\'s', 'skittles', 'haribo', 'stroopwafels', 'speculaas', 'ge vulde koek', 'boterkoek', 'appeltaart', 'cheesecake', 'tiramisu', 'chocolademousse', 'ijscoupe', 'sorbet', 'frozen yoghurt'].includes(naam)) {
+      return { categorie: 'Snoep & Koek', emoji: '🍬' };
     }
     
     // Diepvries
@@ -583,13 +677,23 @@ export default function GroceryListScreen() {
     }
     
     // Kruiden & Sauzen
-    if (['peper', 'kruidenmix', 'olijfolie', 'zonnebloemolie', 'azijn', 'sojasaus', 'ketchup', 'mayonaise', 'mosterd', 'satésaus'].includes(naam)) {
+    if (['peper', 'kruidenmix', 'olijfolie', 'zonnebloemolie', 'azijn', 'sojasaus', 'ketchup', 'mayonaise', 'mosterd', 'satésaus', 'basilicum', 'oregano', 'tijm', 'rozemarijn', 'salie', 'laurier', 'kurkuma', 'gember', 'kaneel', 'nootmuskaat', 'chilipepers', 'jalapeños', 'habanero', 'poblano', 'serrano', 'cayenne', 'paprika poeder', 'curry', 'garam masala', 'ras el hanout'].includes(naam)) {
       return { categorie: 'Kruiden & Sauzen', emoji: '🧂' };
     }
     
+    // Droge producten
+    if (['bloem', 'bakpoeder', 'vanillesuiker', 'suiker', 'zout', 'quinoa', 'bulgur', 'couscous', 'farro', 'freekeh', 'spelt', 'gerst', 'rogge', 'teff'].includes(naam)) {
+      return { categorie: 'Droge producten', emoji: '🌾' };
+    }
+    
     // Conserven
-    if (['bloem', 'bakpoeder', 'vanillesuiker', 'suiker', 'zout', 'rijst', 'pasta'].includes(naam)) {
+    if (['kikkererwten', 'linzen', 'kidneybonen', 'zwarte bonen', 'witte bonen', 'bruine bonen', 'spliterwten', 'kapucijners', 'doperwten', 'bonen'].includes(naam)) {
       return { categorie: 'Conserven', emoji: '🥫' };
+    }
+    
+    // Rijst & Pasta
+    if (['rijst', 'pasta'].includes(naam)) {
+      return { categorie: 'Rijst & Pasta', emoji: '🍚' };
     }
     
     // Standaard
@@ -1218,81 +1322,39 @@ export default function GroceryListScreen() {
           animationType="fade"
           onRequestClose={() => setToonNieuweLijstNaamModal(false)}
         >
-          <View style={[styles.modalOverlay, { justifyContent: 'center', alignItems: 'center' }]}>
-            <View style={{
-              backgroundColor: colors.surface,
-              borderRadius: 20,
-              padding: 24,
-              margin: 20,
-              width: '90%',
-              maxWidth: 400,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 8,
-              elevation: 8,
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>Nieuwe lijst</Text>
-                <TouchableOpacity onPress={() => setToonNieuweLijstNaamModal(false)}>
+          <View style={[styles.modalOverlay, { justifyContent: 'flex-start', paddingTop: 150 }]}>
+            <View style={[styles.modalContent, { height: 'auto', maxHeight: 400, backgroundColor: colors.surface, padding: 32 }]}>
+              <View style={[styles.modalHeader, { justifyContent: 'center' }]}>
+                <Text style={[styles.modalTitle, { color: colors.text, fontSize: 22, textAlign: 'center' }]}>Nieuwe lijst</Text>
+                <TouchableOpacity style={{ position: 'absolute', right: 0 }} onPress={() => setToonNieuweLijstNaamModal(false)}>
                   <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
-                </TouchableOpacity>
+              </TouchableOpacity>
               </View>
               
-              <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 16 }}>
-                Geef je nieuwe lijst een naam:
-              </Text>
-              
+              <View style={{ padding: 16 }}>
+                <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 16 }}>
+                  Geef je nieuwe lijst een naam:
+                </Text>
+                
               <TextInput
-                style={{
-                  backgroundColor: colors.background,
-                  borderRadius: 12,
-                  padding: 16,
-                  fontSize: 16,
-                  marginBottom: 24,
-                  borderWidth: 1,
-                  borderColor: colors.divider,
-                  color: colors.text,
-                }}
-                placeholder="Bijv. Boodschappen, Feestje, etc."
-                placeholderTextColor={colors.textTertiary}
+                  style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.divider }]}
+                  placeholder="Bijv. Boodschappen, Feestje, etc."
+                  placeholderTextColor={colors.textTertiary}
                 value={nieuweLijstNaam}
                 onChangeText={setNieuweLijstNaam}
                 autoFocus
-                onSubmitEditing={bevestigNieuweLijst}
-                returnKeyType="done"
-              />
-              
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-                <TouchableOpacity 
-                  style={{
-                    flex: 1,
-                    backgroundColor: colors.background,
-                    borderRadius: 12,
-                    paddingVertical: 14,
-                    alignItems: 'center',
-                  }}
-                  onPress={() => setToonNieuweLijstNaamModal(false)}
-                >
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.textSecondary }}>
-                    Annuleren
-                  </Text>
-                </TouchableOpacity>
+                  onSubmitEditing={bevestigNieuweLijst}
+                  returnKeyType="done"
+                />
                 
-                <TouchableOpacity 
-                  style={{
-                    flex: 1,
-                    backgroundColor: colors.success,
-                    borderRadius: 12,
-                    paddingVertical: 14,
-                    alignItems: 'center',
-                  }}
-                  onPress={bevestigNieuweLijst}
-                >
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>
-                    Aanmaken
-                  </Text>
-                </TouchableOpacity>
+                <View style={{ alignItems: 'center', marginTop: 32 }}>
+                  <TouchableOpacity 
+                    style={[styles.addButton, { backgroundColor: colors.primary, minWidth: 200, paddingHorizontal: 32, justifyContent: 'center' }]}
+                    onPress={bevestigNieuweLijst}
+                  >
+                    <Text style={[styles.addButtonText, { textAlign: 'center' }]}>Aanmaken</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -1303,26 +1365,26 @@ export default function GroceryListScreen() {
 
   // Detailscherm - producten in lijst
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity onPress={() => setGeselecteerdeLijst(null)}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>{geselecteerdeLijst.naam}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{geselecteerdeLijst.naam}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => setToonSorteerModal(true)} style={{ marginRight: 8 }}>
-            <MaterialCommunityIcons name="filter-variant" size={28} color="#4caf50" />
+            <MaterialCommunityIcons name="filter-variant" size={28} color={colors.success} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setToonNieuwMenuModal(true)} style={{ marginLeft: 8 }}>
-            <MaterialCommunityIcons name="dots-vertical" size={28} color="#333" />
+            <MaterialCommunityIcons name="dots-vertical" size={28} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
 
       {geselecteerdeLijst.items.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>Nog geen producten</Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => setToonProductModal(true)}>
+          <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>Nog geen producten</Text>
+            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setToonProductModal(true)}>
               <MaterialCommunityIcons name="plus" size={24} color="#fff" />
             <Text style={styles.addButtonText}>PRODUCT TOEVOEGEN</Text>
           </TouchableOpacity>
@@ -1342,13 +1404,13 @@ export default function GroceryListScreen() {
         <View style={{ alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
           {toonAfgevinkte ? (
             <TouchableOpacity onPress={() => setToonAfgevinkte(false)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-              <MaterialCommunityIcons name="eye-off-outline" size={22} color="#888" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#888', fontWeight: 'bold' }}>Verberg afgevinkte producten</Text>
+              <MaterialCommunityIcons name="eye-off-outline" size={22} color={colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={{ color: colors.textSecondary, fontWeight: 'bold' }}>Verberg afgevinkte producten</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={() => setToonAfgevinkte(true)} style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-              <MaterialCommunityIcons name="eye-outline" size={22} color="#4caf50" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#4caf50', fontWeight: 'bold' }}>Toon afgevinkte producten</Text>
+              <MaterialCommunityIcons name="eye-outline" size={22} color={colors.success} style={{ marginRight: 6 }} />
+              <Text style={{ color: colors.success, fontWeight: 'bold' }}>Toon afgevinkte producten</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1356,7 +1418,7 @@ export default function GroceryListScreen() {
 
       {geselecteerdeLijst.items.length > 0 && (
         <TouchableOpacity 
-          style={styles.floatingAddButton} 
+          style={[styles.floatingAddButton, { backgroundColor: colors.primary }]} 
           onPress={() => {
             setToonProductModal(true);
             setGekozenCategorie(null);
@@ -1377,8 +1439,8 @@ export default function GroceryListScreen() {
           animationType="slide"
           onRequestClose={() => setToonProductModal(false)}
         >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+        <View style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}>
+          <View style={[{ backgroundColor: colors.surface, height: '80%', minHeight: 500, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, width: '100%' }]}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setToonProductModal(false)}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
@@ -1426,7 +1488,7 @@ export default function GroceryListScreen() {
             {/* Zoekresultaten tonen wanneer er getypt wordt */}
             {toonZoekResultaten && productZoek.length > 0 && (
               <View style={{ flex: 1, marginBottom: 16 }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#222', marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 16, color: colors.text, marginBottom: 8 }}>
                   Zoekresultaten ({getZoekResultaten().length})
                 </Text>
                                 {(() => {
@@ -1440,7 +1502,7 @@ export default function GroceryListScreen() {
                           style={[
                             item.type === 'categorie' 
                               ? {
-                                  backgroundColor: '#f5f5f5',
+                                  backgroundColor: colors.background,
                                   borderRadius: 16,
                                   padding: 20,
                                   marginBottom: 12,
@@ -1452,7 +1514,7 @@ export default function GroceryListScreen() {
                                   shadowOpacity: 0.1,
                                   shadowRadius: 4,
                                 }
-                              : [styles.productOption, { backgroundColor: '#f9f9f9' }]
+                              : [styles.productOption, { backgroundColor: colors.surface }]
                           ]}
                                                   onPress={() => {
                           if (item.type === 'categorie') {
@@ -1482,27 +1544,29 @@ export default function GroceryListScreen() {
                                 <HighlightedText 
                                   text={item.naam}
                                   highlight={productZoek}
-                                  style={{ fontWeight: 'bold', fontSize: 18, color: '#222', marginBottom: 4 }}
+                                  style={{ fontWeight: 'bold', fontSize: 18, color: colors.text, marginBottom: 4 }}
                                   showHighlight={showHighlighting}
+                                  colors={colors}
                                 />
-                                <Text style={{ fontSize: 14, color: '#888' }}>
+                                <Text style={{ fontSize: 14, color: colors.textSecondary }}>
                                   Bekijk alle producten in deze categorie
                                 </Text>
                               </View>
-                              <MaterialCommunityIcons name="chevron-right" size={24} color="#888" />
+                              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textSecondary} />
                             </>
                           ) : (
                             <>
-                              <MaterialCommunityIcons name="plus" size={24} color="#4caf50" />
+                              <MaterialCommunityIcons name="plus" size={24} color={colors.success} />
                               <View style={{ flex: 1 }}>
                                 <HighlightedText 
                                   text={item.naam}
                                   highlight={productZoek}
                                   style={styles.productOptionText}
                                   showHighlight={showHighlighting}
+                                  colors={colors}
                                 />
                               </View>
-                              <Text style={{ fontSize: 12, color: '#888', backgroundColor: '#e8f5e8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+                              <Text style={{ fontSize: 12, color: colors.textSecondary, backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
                                 {item.categorie}
                               </Text>
                             </>
@@ -1530,7 +1594,7 @@ export default function GroceryListScreen() {
                       style={{
                         flex: 1,
                         margin: 8,
-                        backgroundColor: '#f5f5f5',
+                        backgroundColor: colors.background,
                         borderRadius: 18,
                         minHeight: 100,
                         alignItems: 'center',
@@ -1540,7 +1604,7 @@ export default function GroceryListScreen() {
                       onPress={() => setGekozenCategorie(item.naam)}
                     >
                       <Text style={{ fontSize: 48, marginBottom: 8 }}>{item.emoji}</Text>
-                      <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#222' }}>{item.naam}</Text>
+                      <Text style={{ fontWeight: 'bold', fontSize: 16, color: colors.text }}>{item.naam}</Text>
                     </TouchableOpacity>
                   )}
                 />
@@ -1551,9 +1615,9 @@ export default function GroceryListScreen() {
               <>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                   <TouchableOpacity onPress={() => setGekozenCategorie(null)} style={{ marginRight: 8 }}>
-                    <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+                    <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
               </TouchableOpacity>
-                  <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#222' }}>{gekozenCategorie}</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 18, color: colors.text }}>{gekozenCategorie}</Text>
         </View>
                 <View style={{ flex: 1 }}>
                   <FlatList
@@ -1573,7 +1637,7 @@ export default function GroceryListScreen() {
                           }
                         }}
                       >
-                        <MaterialCommunityIcons name="plus" size={24} color="#888" />
+                        <MaterialCommunityIcons name="plus" size={24} color={colors.textSecondary} />
                         <Text style={styles.productOptionText}>{item}</Text>
                       </TouchableOpacity>
                     )}
@@ -1595,29 +1659,29 @@ export default function GroceryListScreen() {
         >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}
         >
-          <View style={[styles.modalContent, { backgroundColor: '#fdf6f0' }]}> 
+          <View style={[{ backgroundColor: colors.surface, height: '80%', minHeight: 500, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, width: '100%' }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <View style={{ flex: 1, alignItems: 'center' }}>
-                <View style={{ width: 40, height: 4, backgroundColor: '#ddd', borderRadius: 2, marginBottom: 4 }} />
-                <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Details</Text>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.divider, borderRadius: 2, marginBottom: 4 }} />
+                <Text style={{ fontWeight: 'bold', fontSize: 18, color: colors.text }}>Details</Text>
           </View>
               <TouchableOpacity onPress={handleProductDetailsOpslaan} disabled={productOpslaanLoading}>
-                <Text style={{ color: productOpslaanLoading ? '#aaa' : '#2196f3', fontWeight: 'bold', fontSize: 16 }}>Klaar</Text>
+                <Text style={{ color: productOpslaanLoading ? colors.textTertiary : colors.primary, fontWeight: 'bold', fontSize: 16 }}>Klaar</Text>
               </TouchableOpacity>
             </View>
             {productOpslaanFout && (
-              <Text style={{ color: 'red', marginBottom: 8 }}>{productOpslaanFout}</Text>
+              <Text style={{ color: colors.error, marginBottom: 8 }}>{productOpslaanFout}</Text>
             )}
             {productOpslaanLoading && (
-              <Text style={{ color: '#2196f3', marginBottom: 8 }}>Even geduld...</Text>
+              <Text style={{ color: colors.primary, marginBottom: 8 }}>Even geduld...</Text>
             )}
             {bewerkProduct && (
               <>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                     <TextInput
-                    style={{ flex: 1, fontWeight: 'bold', fontSize: 20, backgroundColor: '#fff', borderRadius: 12, padding: 8, marginRight: 8 }}
+                    style={{ flex: 1, fontWeight: 'bold', fontSize: 20, backgroundColor: colors.background, borderRadius: 12, padding: 8, marginRight: 8, color: colors.text }}
                     value={bewerkProduct.naam}
                     onChangeText={v => setBewerkProduct({ ...bewerkProduct, naam: v })}
                   />
@@ -1627,42 +1691,42 @@ export default function GroceryListScreen() {
                   </View>
                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }} onPress={() => setToonCategorieModal(true)}>
                   <Text style={{ fontSize: 20, marginRight: 8 }}>{bewerkProduct.categorieEmoji || '🏷️'}</Text>
-                  <Text style={{ fontWeight: 'bold', color: '#888' }}>{bewerkProduct.categorie || 'Categorie kiezen'}</Text>
+                  <Text style={{ fontWeight: 'bold', color: colors.textSecondary }}>{bewerkProduct.categorie || 'Categorie kiezen'}</Text>
                 </TouchableOpacity>
-                <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Notitie toevoegen</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 4 }}>Notitie toevoegen</Text>
           <TextInput
-                  style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16 }}
+                  style={{ backgroundColor: colors.background, borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16, color: colors.text }}
                   placeholder="Notitie"
-                  placeholderTextColor="#bbb"
+                  placeholderTextColor={colors.textTertiary}
                   value={bewerkProduct.notitie || ''}
                   onChangeText={v => setBewerkProduct({ ...bewerkProduct, notitie: v })}
                 />
                 <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Hoeveelheid</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 4 }}>Hoeveelheid</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background, borderRadius: 10 }}>
                       <TouchableOpacity style={{ padding: 8 }} onPress={() => setBewerkProduct({ ...bewerkProduct, hoeveelheid: Math.max(1, parseInt(bewerkProduct.hoeveelheid || '1', 10) - 1).toString() })}>
-                        <MaterialCommunityIcons name="minus" size={22} color="#2196f3" />
+                        <MaterialCommunityIcons name="minus" size={22} color={colors.primary} />
                       </TouchableOpacity>
                       <TextInput
-                        style={{ flex: 1, padding: 12, fontSize: 16, textAlign: 'center' }}
+                        style={{ flex: 1, padding: 12, fontSize: 16, textAlign: 'center', color: colors.text }}
                         placeholder="0.0"
-                        placeholderTextColor="#bbb"
+                        placeholderTextColor={colors.textTertiary}
                       keyboardType="numeric"
                         value={bewerkProduct.hoeveelheid ? String(bewerkProduct.hoeveelheid) : ''}
                         onChangeText={v => setBewerkProduct({ ...bewerkProduct, hoeveelheid: v.replace(/[^0-9]/g, '') })}
                       />
                       <TouchableOpacity style={{ padding: 8 }} onPress={() => setBewerkProduct({ ...bewerkProduct, hoeveelheid: (parseInt(bewerkProduct.hoeveelheid || '1', 10) + 1).toString() })}>
-                        <MaterialCommunityIcons name="plus" size={22} color="#2196f3" />
+                        <MaterialCommunityIcons name="plus" size={22} color={colors.primary} />
                     </TouchableOpacity>
                   </View>
                   </View>
                   <View style={{ flex: 1, marginLeft: 8 }}>
-                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Eenheid</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 4 }}>Eenheid</Text>
           <TextInput
-                      style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16 }}
+                      style={{ backgroundColor: colors.background, borderRadius: 10, padding: 12, fontSize: 16, color: colors.text }}
                       placeholder="Eenheid"
-                      placeholderTextColor="#bbb"
+                      placeholderTextColor={colors.textTertiary}
                       value={bewerkProduct.eenheid || ''}
                       onChangeText={v => setBewerkProduct({ ...bewerkProduct, eenheid: v })}
                     />
@@ -1670,28 +1734,28 @@ export default function GroceryListScreen() {
                 </View>
                 <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>Prijs</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 4 }}>Prijs</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background, borderRadius: 10 }}>
                       <TextInput
-                        style={{ flex: 1, padding: 12, fontSize: 16 }}
+                        style={{ flex: 1, padding: 12, fontSize: 16, color: colors.text }}
                         placeholder="Prijs"
-                        placeholderTextColor="#bbb"
+                        placeholderTextColor={colors.textTertiary}
             keyboardType="decimal-pad"
                         value={bewerkProduct.prijs ? String(bewerkProduct.prijs) : ''}
                         onChangeText={v => setBewerkProduct({ ...bewerkProduct, prijs: v })}
           />
                       <TouchableOpacity style={{ padding: 8 }} onPress={() => setBewerkProduct({ ...bewerkProduct, prijs: '' })}>
-                        <MaterialCommunityIcons name="close" size={20} color="#bbb" />
+                        <MaterialCommunityIcons name="close" size={20} color={colors.textTertiary} />
                       </TouchableOpacity>
         </View>
       </View>
                   <View style={{ flex: 1, marginLeft: 8 }}>
-                    <Text style={{ color: '#888', fontSize: 14, marginBottom: 4 }}>TOTAAL</Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{bewerkProduct.prijs && bewerkProduct.hoeveelheid ? `€ ${(parseFloat(bewerkProduct.prijs) * parseFloat(bewerkProduct.hoeveelheid)).toFixed(2)}` : '€ 0,00'}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 4 }}>TOTAAL</Text>
+                    <Text style={{ fontWeight: 'bold', fontSize: 16, color: colors.text }}>{bewerkProduct.prijs && bewerkProduct.hoeveelheid ? `€ ${(parseFloat(bewerkProduct.prijs) * parseFloat(bewerkProduct.hoeveelheid)).toFixed(2)}` : '€ 0,00'}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={{ backgroundColor: '#e3f0ff', borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 8 }} onPress={handleProductDetailsOpslaan}>
-                  <Text style={{ color: '#2196f3', fontWeight: 'bold', fontSize: 18 }}>Volgende</Text>
+                <TouchableOpacity style={{ backgroundColor: colors.primaryLight, borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 8 }} onPress={handleProductDetailsOpslaan}>
+                  <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 18 }}>Volgende</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -1707,32 +1771,32 @@ export default function GroceryListScreen() {
           onRequestClose={() => setToonCategorieModal(false)}
         >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: '#fff' }]}> 
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <TouchableOpacity onPress={() => setToonCategorieModal(false)}>
-                <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+                <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
               </TouchableOpacity>
-              <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', fontSize: 18 }}>Wijzig categorie</Text>
+              <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', fontSize: 18, color: colors.text }}>Wijzig categorie</Text>
               <View style={{ width: 28 }} />
             </View>
             {bewerkProduct && (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 20, flex: 1 }}>{bewerkProduct.naam}</Text>
+                <Text style={{ fontWeight: 'bold', fontSize: 20, flex: 1, color: colors.text }}>{bewerkProduct.naam}</Text>
                 <Text style={{ fontSize: 28, marginLeft: 8 }}>{bewerkProduct.categorieEmoji || '🏷️'}</Text>
               </View>
             )}
-            <View style={{ flexDirection: 'row', marginBottom: 16, backgroundColor: '#f5f5f5', borderRadius: 12 }}>
+            <View style={{ flexDirection: 'row', marginBottom: 16, backgroundColor: colors.background, borderRadius: 12 }}>
               <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: categorieTab === 'Algemeen' ? '#fff' : 'transparent', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: categorieTab === 'Algemeen' ? colors.surface : 'transparent', alignItems: 'center' }}
                 onPress={() => setCategorieTab('Algemeen')}
               >
-                <Text style={{ fontWeight: 'bold', color: categorieTab === 'Algemeen' ? '#222' : '#888' }}>Algemeen</Text>
+                <Text style={{ fontWeight: 'bold', color: categorieTab === 'Algemeen' ? colors.text : colors.textSecondary }}>Algemeen</Text>
                 </TouchableOpacity>
               <TouchableOpacity
-                style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: categorieTab === 'Mijn categorieën' ? '#fff' : 'transparent', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: categorieTab === 'Mijn categorieën' ? colors.surface : 'transparent', alignItems: 'center' }}
                 onPress={() => setCategorieTab('Mijn categorieën')}
               >
-                <Text style={{ fontWeight: 'bold', color: categorieTab === 'Mijn categorieën' ? '#222' : '#888' }}>Mijn categorieën</Text>
+                <Text style={{ fontWeight: 'bold', color: categorieTab === 'Mijn categorieën' ? colors.text : colors.textSecondary }}>Mijn categorieën</Text>
                 </TouchableOpacity>
               </View>
             <FlatList
@@ -1741,7 +1805,7 @@ export default function GroceryListScreen() {
               renderItem={({ item }) => (
                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }} onPress={() => handleCategorieWijzigen(item)}>
                   <Text style={{ fontSize: 22, marginRight: 16 }}>{item.emoji}</Text>
-                  <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#444' }}>{item.naam}</Text>
+                  <Text style={{ fontWeight: 'bold', fontSize: 16, color: colors.text }}>{item.naam}</Text>
                     </TouchableOpacity>
                   )}
             />
@@ -1760,39 +1824,39 @@ export default function GroceryListScreen() {
         onRequestClose={() => setToonSorteerModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: 320 }]}> 
+          <View style={[styles.modalContent, { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: 320 }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <TouchableOpacity onPress={() => setToonSorteerModal(false)}>
-                <MaterialCommunityIcons name="arrow-left" size={28} color="#333" />
+                <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
               </TouchableOpacity>
-              <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', fontSize: 18 }}>Sorteer op:</Text>
+              <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', fontSize: 18, color: colors.text }}>Sorteer op:</Text>
               <TouchableOpacity onPress={() => setToonSorteerModal(false)}>
-                <MaterialCommunityIcons name="close" size={28} color="#888" />
+                <MaterialCommunityIcons name="close" size={28} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }} onPress={() => setSorteerOptie('Categorieën')}>
-              <MaterialCommunityIcons name="sort-variant" size={22} color={sorteerOptie === 'Categorieën' ? '#4caf50' : '#888'} style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Categorieën' ? '#4caf50' : '#222' }}>Categorieën</Text>
-              {sorteerOptie === 'Categorieën' && <MaterialCommunityIcons name="check" size={22} color="#4caf50" />}
+              <MaterialCommunityIcons name="sort-variant" size={22} color={sorteerOptie === 'Categorieën' ? colors.success : colors.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Categorieën' ? colors.success : colors.text }}>Categorieën</Text>
+              {sorteerOptie === 'Categorieën' && <MaterialCommunityIcons name="check" size={22} color={colors.success} />}
               </TouchableOpacity>
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }} onPress={() => setSorteerOptie('Alfabetisch')}>
-              <MaterialCommunityIcons name="sort-alphabetical-variant" size={22} color={sorteerOptie === 'Alfabetisch' ? '#4caf50' : '#888'} style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Alfabetisch' ? '#4caf50' : '#222' }}>Alfabetisch</Text>
-              {sorteerOptie === 'Alfabetisch' && <MaterialCommunityIcons name="check" size={22} color="#4caf50" />}
+              <MaterialCommunityIcons name="sort-alphabetical-variant" size={22} color={sorteerOptie === 'Alfabetisch' ? colors.success : colors.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Alfabetisch' ? colors.success : colors.text }}>Alfabetisch</Text>
+              {sorteerOptie === 'Alfabetisch' && <MaterialCommunityIcons name="check" size={22} color={colors.success} />}
               </TouchableOpacity>
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }} onPress={() => setSorteerOptie('Aangepast')}>
-              <MaterialCommunityIcons name="sort" size={22} color={sorteerOptie === 'Aangepast' ? '#4caf50' : '#888'} style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Aangepast' ? '#4caf50' : '#222' }}>Aangepast</Text>
-              {sorteerOptie === 'Aangepast' && <MaterialCommunityIcons name="check" size={22} color="#4caf50" />}
+              <MaterialCommunityIcons name="sort" size={22} color={sorteerOptie === 'Aangepast' ? colors.success : colors.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontWeight: 'bold', color: sorteerOptie === 'Aangepast' ? colors.success : colors.text }}>Aangepast</Text>
+              {sorteerOptie === 'Aangepast' && <MaterialCommunityIcons name="check" size={22} color={colors.success} />}
             </TouchableOpacity>
-            <Text style={{ color: '#888', fontWeight: 'bold', marginTop: 18, marginBottom: 8 }}>AFGEVINKTE ITEMS</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f5f5f5', borderRadius: 12, padding: 14, marginBottom: 8 }}>
+            <Text style={{ color: colors.textSecondary, fontWeight: 'bold', marginTop: 18, marginBottom: 8 }}>AFGEVINKTE ITEMS</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.background, borderRadius: 12, padding: 14, marginBottom: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: 'bold', color: '#222' }}>Chronologisch</Text>
-                <Text style={{ color: '#888', fontSize: 13 }}>Gekochte producten worden gesorteerd in de volgorde waarin ze zijn aangevinkt.</Text>
+                <Text style={{ fontWeight: 'bold', color: colors.text }}>Chronologisch</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Gekochte producten worden gesorteerd in de volgorde waarin ze zijn aangevinkt.</Text>
             </View>
               <TouchableOpacity onPress={() => setChronologischChecked(!chronologischChecked)} style={{ marginLeft: 12 }}>
-                <MaterialCommunityIcons name={chronologischChecked ? 'toggle-switch' : 'toggle-switch-off-outline'} size={38} color={chronologischChecked ? '#4caf50' : '#bbb'} />
+                <MaterialCommunityIcons name={chronologischChecked ? 'toggle-switch' : 'toggle-switch-off-outline'} size={38} color={chronologischChecked ? colors.success : colors.textTertiary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1808,7 +1872,7 @@ export default function GroceryListScreen() {
       >
         <View style={[styles.modalOverlay, { justifyContent: 'center' }]}>
           <View style={{
-            backgroundColor: '#fff',
+            backgroundColor: colors.surface,
             borderRadius: 20,
             padding: 24,
             margin: 20,
@@ -1820,18 +1884,18 @@ export default function GroceryListScreen() {
             elevation: 8,
             maxWidth: '90%',
           }}>
-            <MaterialCommunityIcons name="information-outline" size={48} color="#4caf50" style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#222', textAlign: 'center', marginBottom: 8 }}>
+            <MaterialCommunityIcons name="information-outline" size={48} color={colors.success} style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
               Weet u zeker?
             </Text>
-            <Text style={{ fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 24, lineHeight: 22 }}>
+            <Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 22 }}>
               "{duplicaatProduct}" staat al op uw lijst.{'\n'}Wilt u dit product nog een keer toevoegen?
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity 
                 style={{
                   flex: 1,
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: colors.background,
                   borderRadius: 12,
                   paddingVertical: 14,
                   alignItems: 'center',
@@ -1841,14 +1905,14 @@ export default function GroceryListScreen() {
                   setDuplicaatProduct(null);
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#666' }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.textSecondary }}>
                   Nee, laat maar
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={{
                   flex: 1,
-                  backgroundColor: '#4caf50',
+                  backgroundColor: colors.success,
                   borderRadius: 12,
                   paddingVertical: 14,
                   alignItems: 'center',
@@ -1894,28 +1958,28 @@ export default function GroceryListScreen() {
         onRequestClose={() => setToonMenuModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Lijst opties</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Lijst opties</Text>
               <TouchableOpacity onPress={() => setToonMenuModal(false)}>
-                <MaterialCommunityIcons name="close" size={24} color="#666" />
+                <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             
             <View style={styles.menuOptions}>
               <TouchableOpacity style={styles.menuOption} onPress={handleShareList}>
-                <MaterialCommunityIcons name="share-variant" size={24} color="#4caf50" />
-                <Text style={styles.menuOptionText}>Deel lijst</Text>
+                <MaterialCommunityIcons name="share-variant" size={24} color={colors.success} />
+                <Text style={[styles.menuOptionText, { color: colors.text }]}>Deel lijst</Text>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuOption} onPress={handleViewMembers}>
-                <MaterialCommunityIcons name="account-group" size={24} color="#4caf50" />
-                <Text style={styles.menuOptionText}>Bekijk leden (binnenkort beschikbaar)</Text>
+                <MaterialCommunityIcons name="account-group" size={24} color={colors.success} />
+                <Text style={[styles.menuOptionText, { color: colors.text }]}>Bekijk leden (binnenkort beschikbaar)</Text>
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.menuOption} onPress={handleDeleteList}>
-                <MaterialCommunityIcons name="delete" size={24} color="#ff4444" />
-                <Text style={[styles.menuOptionText, { color: '#ff4444' }]}>Verwijder lijst</Text>
+                <MaterialCommunityIcons name="delete" size={24} color={colors.error} />
+                <Text style={[styles.menuOptionText, { color: colors.error }]}>Verwijder lijst</Text>
         </TouchableOpacity>
       </View>
         </View>
@@ -1944,23 +2008,24 @@ export default function GroceryListScreen() {
         animationType="fade"
         onRequestClose={() => setToonNieuweLijstNaamModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { height: 'auto', maxHeight: 300 }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: '#333' }]}>Nieuwe lijst</Text>
-              <TouchableOpacity onPress={() => setToonNieuweLijstNaamModal(false)}>
-                <MaterialCommunityIcons name="close" size={24} color="#666" />
+        <View style={[styles.modalOverlay, { justifyContent: 'flex-start', paddingTop: 150 }]}>
+          <View style={[styles.modalContent, { height: 'auto', maxHeight: 400, backgroundColor: colors.surface, padding: 32 }]}>
+            <View style={[styles.modalHeader, { justifyContent: 'center' }]}>
+              <Text style={[styles.modalTitle, { color: colors.text, fontSize: 22, textAlign: 'center' }]}>Nieuwe lijst</Text>
+              <TouchableOpacity style={{ position: 'absolute', right: 0 }} onPress={() => setToonNieuweLijstNaamModal(false)}>
+                <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
             </View>
             
             <View style={{ padding: 16 }}>
-              <Text style={{ fontSize: 16, color: '#666', marginBottom: 16 }}>
+              <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 16 }}>
                 Geef je nieuwe lijst een naam:
               </Text>
               
             <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.divider }]}
                 placeholder="Bijv. Boodschappen, Feestje, etc."
+                placeholderTextColor={colors.textTertiary}
               value={nieuweLijstNaam}
               onChangeText={setNieuweLijstNaam}
               autoFocus
@@ -1968,20 +2033,13 @@ export default function GroceryListScreen() {
                 returnKeyType="done"
               />
               
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+              <View style={{ alignItems: 'center', marginTop: 32 }}>
                 <TouchableOpacity 
-                  style={[styles.addButton, { backgroundColor: '#ccc', flex: 0.4 }]}
-                  onPress={() => setToonNieuweLijstNaamModal(false)}
-                >
-                  <Text style={[styles.addButtonText, { color: '#666' }]}>Annuleren</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.addButton, { flex: 0.4 }]}
+                  style={[styles.addButton, { backgroundColor: colors.primary, minWidth: 200, paddingHorizontal: 32, justifyContent: 'center' }]}
                   onPress={bevestigNieuweLijst}
                 >
-                  <Text style={styles.addButtonText}>Aanmaken</Text>
-              </TouchableOpacity>
+                  <Text style={[styles.addButtonText, { textAlign: 'center' }]}>Aanmaken</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -2118,10 +2176,12 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: 8,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   lijstCardProgressBar: {
     height: 4,
     borderRadius: 2,
+    backgroundColor: '#4CAF50',
   },
   lijstCardSubtitle: {
     fontSize: 14,
@@ -2198,14 +2258,15 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 24,
     padding: 24,
-    height: '80%',
-    minHeight: 500,
+    maxWidth: '90%',
+    maxHeight: '80%',
+    minHeight: 200,
   },
   modalHeader: {
     flexDirection: 'row',

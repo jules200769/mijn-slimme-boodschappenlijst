@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, Alert } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  Alert,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { sharedLists } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { supabase } from '../lib/supabase';
 
 export default function ViewMembersModal({ visible, onClose, listCode, isOwner }) {
-  const { user } = useAuth();
+  const { colors } = useTheme();
   const [members, setMembers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (visible && listCode) {
@@ -16,30 +24,50 @@ export default function ViewMembersModal({ visible, onClose, listCode, isOwner }
   }, [visible, listCode]);
 
   const loadMembers = async () => {
-    if (!listCode) return;
-    
-    setIsLoading(true);
     try {
-      const { data, error } = await sharedLists.getListMembers(listCode);
+      setLoading(true);
       
+      // Haal leden op van de gedeelde lijst
+      const { data, error } = await supabase
+        .from('shared_lists')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            full_name,
+            email
+          )
+        `)
+        .eq('list_code', listCode);
+
       if (error) {
-        console.error('Fout bij laden leden:', error);
-        Alert.alert('Fout', 'Kon leden niet laden. Probeer het opnieuw.');
+        console.error('Error loading members:', error);
         return;
       }
-      
-      setMembers(data || []);
+
+      // Verwerk de data
+      const processedMembers = data.map(item => ({
+        id: item.user_id,
+        name: item.profiles?.full_name || 'Onbekende gebruiker',
+        email: item.profiles?.email || 'Geen email',
+        joinedAt: item.created_at,
+        isOwner: item.is_owner || false
+      }));
+
+      setMembers(processedMembers);
     } catch (error) {
-      console.error('Fout bij laden leden:', error);
-      Alert.alert('Fout', 'Er is een fout opgetreden. Probeer het opnieuw.');
+      console.error('Error loading members:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const removeMember = async (memberUserId) => {
-    if (!isOwner || !user) return;
-    
+  const removeMember = async (memberId) => {
+    if (!isOwner) {
+      Alert.alert('Geen rechten', 'Alleen de eigenaar kan leden verwijderen.');
+      return;
+    }
+
     Alert.alert(
       'Lid verwijderen',
       'Weet je zeker dat je dit lid wilt verwijderen?',
@@ -50,20 +78,24 @@ export default function ViewMembersModal({ visible, onClose, listCode, isOwner }
           style: 'destructive',
           onPress: async () => {
             try {
-              const { error } = await sharedLists.removeListMember(listCode, memberUserId, user.id);
-              
+              const { error } = await supabase
+                .from('shared_lists')
+                .delete()
+                .eq('list_code', listCode)
+                .eq('user_id', memberId);
+
               if (error) {
-                console.error('Fout bij verwijderen lid:', error);
-                Alert.alert('Fout', 'Kon lid niet verwijderen. Probeer het opnieuw.');
+                console.error('Error removing member:', error);
+                Alert.alert('Fout', 'Kon lid niet verwijderen.');
                 return;
               }
-              
+
               // Herlaad leden
               loadMembers();
-              Alert.alert('Succes', 'Lid is verwijderd uit de lijst.');
+              Alert.alert('Succes', 'Lid is verwijderd.');
             } catch (error) {
-              console.error('Fout bij verwijderen lid:', error);
-              Alert.alert('Fout', 'Er is een fout opgetreden. Probeer het opnieuw.');
+              console.error('Error removing member:', error);
+              Alert.alert('Fout', 'Kon lid niet verwijderen.');
             }
           }
         }
@@ -72,17 +104,21 @@ export default function ViewMembersModal({ visible, onClose, listCode, isOwner }
   };
 
   const renderMember = ({ item }) => (
-    <View style={styles.memberItem}>
+    <View style={[styles.memberRow, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}>
       <View style={styles.memberInfo}>
-        <Text style={styles.memberName}>{item.full_name || 'Onbekende gebruiker'}</Text>
-        <Text style={styles.memberEmail}>{item.email}</Text>
+        <Text style={[styles.memberName, { color: colors.text }]}>
+          {item.name} {item.isOwner && '(Eigenaar)'}
+        </Text>
+        <Text style={[styles.memberEmail, { color: colors.textSecondary }]}>
+          {item.email}
+        </Text>
       </View>
-      {isOwner && item.user_id !== user?.id && (
-        <TouchableOpacity 
-          onPress={() => removeMember(item.user_id)}
+      {isOwner && !item.isOwner && (
+        <TouchableOpacity
+          onPress={() => removeMember(item.id)}
           style={styles.removeButton}
         >
-          <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
+          <MaterialCommunityIcons name="delete" size={20} color={colors.error} />
         </TouchableOpacity>
       )}
     </View>
@@ -92,37 +128,34 @@ export default function ViewMembersModal({ visible, onClose, listCode, isOwner }
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Bekijk leden</Text>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Leden van de lijst</Text>
             <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color="#666" />
+              <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
-          
-          <View style={styles.content}>
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Leden laden...</Text>
-              </View>
-            ) : members.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Nog geen leden</Text>
-              </View>
-            ) : (
-              <FlatList
-                data={members}
-                renderItem={renderMember}
-                keyExtractor={item => item.user_id}
-                style={styles.membersList}
-                showsVerticalScrollIndicator={false}
-              />
-            )}
-          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Leden laden...</Text>
+            </View>
+          ) : members.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Nog geen leden</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={members}
+              renderItem={renderMember}
+              keyExtractor={item => item.id}
+              style={styles.membersList}
+            />
+          )}
         </View>
       </View>
     </Modal>
@@ -130,67 +163,57 @@ export default function ViewMembersModal({ visible, onClose, listCode, isOwner }
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modal: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
-    margin: 20,
+  modalContent: {
     width: '90%',
     maxWidth: 400,
     maxHeight: '80%',
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
   },
-  header: {
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  title: {
-    fontSize: 20,
+  modalTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#222',
-  },
-  content: {
-    flex: 1,
   },
   loadingContainer: {
-    padding: 20,
+    padding: 40,
     alignItems: 'center',
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
   },
   emptyContainer: {
-    padding: 20,
+    padding: 40,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
   },
   membersList: {
     flex: 1,
   },
-  memberItem: {
+  memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    marginBottom: 8,
+    padding: 16,
+    borderBottomWidth: 1,
   },
   memberInfo: {
     flex: 1,
@@ -198,12 +221,10 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#222',
+    marginBottom: 4,
   },
   memberEmail: {
     fontSize: 14,
-    color: '#666',
-    marginTop: 2,
   },
   removeButton: {
     padding: 8,

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 
 export default function EditEmailScreen({ navigation }) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
 
@@ -37,26 +39,35 @@ export default function EditEmailScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f7f7' }}>
-      <View style={styles.header}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Wijzig e-mailadres</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Wijzig e-mailadres</Text>
         <View style={{ width: 28 }} />
       </View>
-      <View style={styles.container}>
-        <Text style={styles.label}>Nieuw e-mailadres</Text>
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.label, { color: colors.text }]}>Nieuw e-mailadres</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { 
+            backgroundColor: colors.background, 
+            borderColor: colors.border,
+            color: colors.text
+          }]}
           value={email}
           onChangeText={setEmail}
           placeholder="Voer je e-mailadres in"
+          placeholderTextColor={colors.textSecondary}
           autoFocus
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
+        <TouchableOpacity 
+          style={[styles.saveButton, { backgroundColor: colors.success }]} 
+          onPress={handleSave} 
+          disabled={loading}
+        >
           <Text style={styles.saveButtonText}>{loading ? 'Opslaan...' : 'Opslaan'}</Text>
         </TouchableOpacity>
       </View>
@@ -72,15 +83,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 8,
-    backgroundColor: '#f7f7f7',
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#222',
   },
   container: {
-    backgroundColor: '#fff',
     margin: 24,
     borderRadius: 18,
     padding: 24,
@@ -88,21 +96,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: '#222',
     marginBottom: 8,
     fontWeight: 'bold',
   },
   input: {
-    backgroundColor: '#f5f5f5',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   saveButton: {
-    backgroundColor: '#4caf50',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',

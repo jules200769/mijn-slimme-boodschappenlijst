@@ -74,7 +74,6 @@ export default function SettingsScreen() {
             <Text style={[styles.rowText, { color: colors.text }]}>Help & Support</Text>
             <MaterialCommunityIcons name="help-circle-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-<<<<<<< HEAD
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('About')}>
             <Text style={[styles.rowText, { color: colors.text }]}>Over deze app</Text>
