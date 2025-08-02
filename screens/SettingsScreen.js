@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Image } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -10,17 +10,22 @@ export default function SettingsScreen() {
   const { signOut, user } = useAuth();
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const displayName = user?.name || user?.user_metadata?.name || 'naam van profiel';
+  const profilePhotoUrl = user?.user_metadata?.profile_photo_url;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: 0 }}>
         {/* Profiel header */}
         <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
-          <View style={[styles.profileCircle, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.profileInitial, { color: colors.primary }]}>
-              {displayName[0]?.toUpperCase() || '?'}
-            </Text>
-          </View>
+          {profilePhotoUrl ? (
+            <Image source={{ uri: profilePhotoUrl }} style={styles.profileImage} />
+          ) : (
+            <View style={[styles.profileCircle, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.profileInitial, { color: colors.primary }]}>
+                {displayName[0]?.toUpperCase() || '?'}
+              </Text>
+            </View>
+          )}
           <Text style={[styles.profileName, { color: colors.text }]}>
             {`"${displayName}"`}
           </Text>
@@ -110,6 +115,12 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
+  },
+  profileImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     marginBottom: 8,
   },
   profileInitial: {

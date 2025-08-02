@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, profilePhotos } from '../lib/supabase';
 import { getAutoLoginEnabled, clearAutoLogin } from '../lib/autoLogin';
 
 const AuthContext = createContext();
@@ -17,6 +17,30 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [autoLoginActive, setAutoLoginActive] = useState(false);
 
+  // Functie om user data uit te breiden met profielfoto
+  const enrichUserData = async (userData) => {
+    if (!userData) return userData;
+    
+    try {
+      // Haal profielfoto URL op
+      const { data: photoUrl } = await profilePhotos.getProfilePhotoUrl(userData.id);
+      
+      // Voeg profielfoto URL toe aan user metadata
+      const enrichedUser = {
+        ...userData,
+        user_metadata: {
+          ...userData.user_metadata,
+          profile_photo_url: photoUrl
+        }
+      };
+      
+      return enrichedUser;
+    } catch (error) {
+      console.log('Error enriching user data:', error);
+      return userData;
+    }
+  };
+
   useEffect(() => {
     // Haal huidige sessie en gebruiker op bij app start
     const getCurrentSession = async () => {
@@ -27,9 +51,10 @@ export const AuthProvider = ({ children }) => {
         console.log('DEBUG: autoLogin:', autoLogin);
         console.log('DEBUG: Supabase session:', session);
         if (session && session.user && autoLogin) {
-          setUser(session.user);
+          const enrichedUser = await enrichUserData(session.user);
+          setUser(enrichedUser);
           setAutoLoginActive(true);
-          console.log('DEBUG: Auto-login actief, user:', session.user);
+          console.log('DEBUG: Auto-login actief, user:', enrichedUser);
         } else {
           setUser(null);
           setAutoLoginActive(false);
@@ -47,13 +72,16 @@ export const AuthProvider = ({ children }) => {
     getCurrentSession();
 
     // Luister naar auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-      if (!session?.user) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const enrichedUser = await enrichUserData(session.user);
+        setUser(enrichedUser);
+      } else {
+        setUser(null);
         setAutoLoginActive(false);
         clearAutoLogin();
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -95,10 +123,13 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserContext = async () => {
     try {
-      const { user, error } = await supabase.auth.getCurrentUser();
-      if (!error) setUser(user);
+      const { user: currentUser, error } = await supabase.auth.getCurrentUser();
+      if (!error && currentUser) {
+        const enrichedUser = await enrichUserData(currentUser);
+        setUser(enrichedUser);
+      }
     } catch (e) {
-      // Fout bij ophalen user, geen update
+      console.log('Error updating user context:', e);
     }
   };
 

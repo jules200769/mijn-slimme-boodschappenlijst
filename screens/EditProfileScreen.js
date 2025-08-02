@@ -1,13 +1,141 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert, Image } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { supabase } from '../lib/supabase';
+import { supabase, profilePhotos } from '../lib/supabase';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function EditProfileScreen({ navigation }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUserContext } = useAuth();
   const { colors } = useTheme();
+  const [profileImage, setProfileImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Laad de profielfoto bij het openen van het scherm
+  useEffect(() => {
+    loadProfilePhoto();
+  }, []);
+
+  const loadProfilePhoto = async () => {
+    if (!user) return;
+    
+    // Haal profielfoto URL uit user metadata
+    const photoUrl = user?.user_metadata?.profile_photo_url;
+    if (photoUrl) {
+      setProfileImage(photoUrl);
+    }
+  };
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Toestemming nodig', 'We hebben toegang tot je foto\'s nodig om een profielfoto te kunnen selecteren.');
+      return false;
+    }
+    return true;
+  };
+
+  const requestCameraPermissions = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Toestemming nodig', 'We hebben toegang tot je camera nodig om een foto te kunnen maken.');
+      return false;
+    }
+    return true;
+  };
+
+  const showImagePickerOptions = () => {
+    Alert.alert(
+      'Profielfoto wijzigen',
+      'Kies een optie:',
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        { 
+          text: 'Maak foto', 
+          onPress: () => takePhoto() 
+        },
+        { 
+          text: 'Kies uit galerij', 
+          onPress: () => pickImage() 
+        }
+      ]
+    );
+  };
+
+  const takePhoto = async () => {
+    const hasPermission = await requestCameraPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het maken van de foto.');
+    }
+  };
+
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het selecteren van de foto.');
+    }
+  };
+
+  const uploadProfileImage = async (imageUri) => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Upload de foto naar Supabase storage
+      const { data: photoUrl, error: uploadError } = await profilePhotos.uploadProfilePhoto(user.id, imageUri);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Update de user metadata met de nieuwe foto URL
+      const { error: updateError } = await profilePhotos.updateProfilePhotoUrl(photoUrl);
+      
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update de lokale state
+      setProfileImage(photoUrl);
+      
+      // Update de user context
+      await updateUserContext();
+      
+      Alert.alert('Succes', 'Je profielfoto is bijgewerkt!');
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het uploaden van de foto. Probeer het opnieuw.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -58,11 +186,29 @@ export default function EditProfileScreen({ navigation }) {
         </View>
         {/* Profielcirkel en naam */}
         <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
-          <View style={[styles.profileCircle, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.profileInitial, { color: colors.primary }]}>
-              {displayName[0]?.toUpperCase() || '?'}
-            </Text>
-          </View>
+          <TouchableOpacity 
+            onPress={showImagePickerOptions} 
+            style={styles.profileImageContainer}
+            disabled={loading}
+          >
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            ) : (
+              <View style={[styles.profileCircle, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[styles.profileInitial, { color: colors.primary }]}>
+                  {displayName[0]?.toUpperCase() || '?'}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.editIconContainer, { backgroundColor: colors.primary }]}>
+              <MaterialCommunityIcons name="camera" size={16} color="white" />
+            </View>
+            {loading && (
+              <View style={[styles.loadingOverlay, { backgroundColor: colors.background + '80' }]}>
+                <MaterialCommunityIcons name="loading" size={20} color={colors.primary} />
+              </View>
+            )}
+          </TouchableOpacity>
           <Text style={[styles.profileName, { color: colors.text }]}>
             {`"${displayName}"`}
           </Text>
@@ -116,13 +262,21 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 16,
   },
+  profileImageContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
   profileCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+  },
+  profileImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
   },
   profileInitial: {
     fontSize: 32,
@@ -131,6 +285,28 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
     borderRadius: 18,
