@@ -5,13 +5,23 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "center",
+      "backgroundColor": "#4CAF50"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mijnslimmeboodschappenlijst.app"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "package": "com.mijnslimmeboodschappenlijst.app"
+      "package": "com.mijnslimmeboodschappenlijst.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#4CAF50"
+      }
     },
     "scheme": "mijn-slimme-boodschappenlijst"
   }
