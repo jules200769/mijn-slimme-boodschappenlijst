@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import notificationTriggers from '../lib/notificationTriggers';
 
 export default function ShareListModal({ visible, onClose, listData }) {
   const { colors } = useTheme();
@@ -52,6 +53,13 @@ export default function ShareListModal({ visible, onClose, listData }) {
       }
 
       setShareCode(code);
+      
+      // Trigger notification for list shared
+      await notificationTriggers.triggerListSharedNotification(
+        listData.naam, 
+        user?.user_metadata?.name || user?.email, 
+        code
+      );
     } catch (error) {
       console.error('Error generating share code:', error);
       Alert.alert('Fout', 'Kon geen deelcode genereren.');

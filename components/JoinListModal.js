@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import notificationTriggers from '../lib/notificationTriggers';
 
 export default function JoinListModal({ visible, onClose, onJoinSuccess }) {
   const { colors } = useTheme();
@@ -72,6 +73,13 @@ export default function JoinListModal({ visible, onClose, onJoinSuccess }) {
       Alert.alert('Succes', 'Je bent succesvol toegetreden tot de lijst!');
       setJoinCode('');
       onClose();
+      
+      // Trigger notification for list joined
+      await notificationTriggers.triggerListJoinedNotification(
+        sharedList.name || 'Gedeelde Lijst',
+        user?.user_metadata?.name || user?.email
+      );
+      
       if (onJoinSuccess) {
         onJoinSuccess();
       }

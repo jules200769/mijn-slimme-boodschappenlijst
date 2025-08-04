@@ -23,6 +23,16 @@
         "backgroundColor": "#4CAF50"
       }
     },
-    "scheme": "mijn-slimme-boodschappenlijst"
+    "scheme": "mijn-slimme-boodschappenlijst",
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4CAF50",
+          "sounds": ["./assets/notification.wav"]
+        }
+      ]
+    ]
   }
 }

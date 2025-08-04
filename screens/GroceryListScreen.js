@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { lists, supabase, sharedLists } from '../lib/supabase';
+import notificationTriggers from '../lib/notificationTriggers';
 import ShareListModal from '../components/ShareListModal';
 import ViewMembersModal from '../components/ViewMembersModal';
 import JoinListModal from '../components/JoinListModal';
@@ -201,6 +202,9 @@ export default function GroceryListScreen() {
     if (user) {
       loadLijsten();
       setupRealtimeSubscriptions();
+      
+      // Track user activity when screen loads
+      notificationTriggers.trackUserActivity();
     } else {
       setLijsten([]);
       setGeselecteerdeLijst(null);
@@ -785,6 +789,10 @@ export default function GroceryListScreen() {
       setLijsten(nieuweLijsten);
       setGeselecteerdeLijst(nieuweLijst);
       setToonProductModal(false);
+      
+      // Track user activity and trigger notification for item added
+      await notificationTriggers.trackUserActivity();
+      await notificationTriggers.triggerItemAddedNotification(productNaam, geselecteerdeLijst.naam, user?.user_metadata?.name || user?.email);
     } else {
       Alert.alert('Fout', 'Kon product niet toevoegen');
     }
@@ -809,6 +817,20 @@ export default function GroceryListScreen() {
       const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
       setLijsten(nieuweLijsten);
       setGeselecteerdeLijst(nieuweLijst);
+      
+      // Check if list is completed
+      const completedItems = nieuweLijst.items.filter(item => item.checked).length;
+      const totalItems = nieuweLijst.items.length;
+      
+      // Track user activity
+      await notificationTriggers.trackUserActivity();
+      
+      if (completedItems === totalItems && totalItems > 0) {
+        await notificationTriggers.triggerListCompletedNotification(nieuweLijst.naam, completedItems);
+      } else if (completedItems === totalItems - 1 && totalItems > 1) {
+        // Almost empty (1 item remaining)
+        await notificationTriggers.triggerListAlmostEmptyNotification(nieuweLijst.naam, 1);
+      }
     } else {
       Alert.alert('Fout', 'Kon product niet afvinken');
     }
@@ -831,6 +853,13 @@ export default function GroceryListScreen() {
       const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
       setLijsten(nieuweLijsten);
       setGeselecteerdeLijst(nieuweLijst);
+      
+      // Track user activity and find the removed item for notification
+      await notificationTriggers.trackUserActivity();
+      const removedItem = geselecteerdeLijst.items.find(item => item.id === productId);
+      if (removedItem) {
+        await notificationTriggers.triggerItemRemovedNotification(removedItem.naam, geselecteerdeLijst.naam, user?.user_metadata?.name || user?.email);
+      }
     } else {
       Alert.alert('Fout', 'Kon product niet verwijderen');
     }

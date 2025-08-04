@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Image } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import notificationTriggers from '../lib/notificationTriggers';
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
@@ -11,6 +12,13 @@ export default function SettingsScreen() {
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const displayName = user?.name || user?.user_metadata?.name || 'naam van profiel';
   const profilePhotoUrl = user?.user_metadata?.profile_photo_url;
+
+  // Track user activity when settings screen loads
+  useEffect(() => {
+    if (user) {
+      notificationTriggers.trackUserActivity();
+    }
+  }, [user]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -65,7 +73,7 @@ export default function SettingsScreen() {
           
           {/* Verwijderd: Taal keuze */}
           {/* Extra opties als placeholder */}
-          <TouchableOpacity style={styles.row}>
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('NotificationSettings')}>
             <Text style={[styles.rowText, { color: colors.text }]}>Notificaties beheren</Text>
             <MaterialCommunityIcons name="bell-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
