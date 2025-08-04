@@ -115,7 +115,7 @@ export default function NotificationSettingsScreen() {
       await saveAppNotificationSetting(false);
       
       Alert.alert(
-        'Notificaties Uitgeschakeld',
+        'Alle Notificaties Uitgeschakeld',
         'Alle notificaties zijn nu uitgeschakeld.'
       );
     } else {
@@ -138,7 +138,7 @@ export default function NotificationSettingsScreen() {
         await saveAppNotificationSetting(true);
         
         Alert.alert(
-          'Notificaties Ingeschakeld',
+          'Alle Notificaties Ingeschakeld',
           'Alle notificaties zijn nu ingeschakeld!'
         );
       } else {
@@ -256,9 +256,9 @@ export default function NotificationSettingsScreen() {
                 <View style={styles.rowContent}>
                   <MaterialCommunityIcons name="bell" size={24} color={colors.primary} />
                   <View style={styles.textContainer}>
-                    <Text style={[styles.rowTitle, { color: colors.text }]}>Notificaties</Text>
+                    <Text style={[styles.rowTitle, { color: colors.text }]}>Alle Notificaties</Text>
                     <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>
-                      {isEnabled ? 'Ingeschakeld' : 'Uitgeschakeld'}
+                      {isEnabled ? 'Alle notificaties aan' : 'Alle notificaties uit'}
                     </Text>
                   </View>
                 </View>
@@ -274,7 +274,7 @@ export default function NotificationSettingsScreen() {
               {!isEnabled && (
                 <View style={styles.disabledMessage}>
                   <Text style={[styles.disabledMessageText, { color: colors.textSecondary }]}>
-                    Notificaties uitgeschakeld
+                    Alle notificaties uitgeschakeld
                   </Text>
                 </View>
               )}
