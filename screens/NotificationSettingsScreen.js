@@ -119,15 +119,15 @@ export default function NotificationSettingsScreen() {
         'Alle notificaties zijn nu uitgeschakeld.'
       );
     } else {
-      // Turn on main notifications - request permissions and enable all settings
+      // Turn on main notifications - request permissions and enable all settings EXCEPT itemAdded
       const token = await notificationService.registerForPushNotificationsAsync();
       if (token) {
         setHasPermissions(true);
         
-        // Enable all notification settings
+        // Enable all notification settings EXCEPT itemAdded (keep it false for new users)
         const newSettings = {
           shoppingReminders: true,
-          itemAdded: true,
+          itemAdded: false, // Blijft uit voor nieuwe gebruikers
           listShared: true,
           weeklyReminders: true,
           inactivityReminders: true,
@@ -139,7 +139,7 @@ export default function NotificationSettingsScreen() {
         
         Alert.alert(
           'Alle Notificaties Ingeschakeld',
-          'Alle notificaties zijn nu ingeschakeld!'
+          'Alle notificaties zijn nu ingeschakeld! (Items Toegevoegd blijft uit)'
         );
       } else {
         Alert.alert(
