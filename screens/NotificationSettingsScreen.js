@@ -98,7 +98,7 @@ export default function NotificationSettingsScreen() {
     }
   };
 
-  // Toggle main notification switch
+  // Toggle main notification switch - NIEUWE IMPLEMENTATIE
   const toggleMainNotification = async () => {
     if (isEnabled) {
       // Turn off main notifications - disable all specific settings
@@ -150,13 +150,13 @@ export default function NotificationSettingsScreen() {
     }
   };
 
-  // Toggle individual notification setting
+  // Toggle individual notification setting - NIEUWE IMPLEMENTATIE
   const toggleSetting = async (key) => {
     // Only allow toggling if app-level notifications are enabled
     if (!isEnabled) {
       Alert.alert(
         'Notificaties Uitgeschakeld',
-        'Schakel eerst notificaties in om deze instelling te wijzigen.'
+        'Schakel eerst "Alle Notificaties" in om deze instelling te wijzigen.'
       );
       return;
     }
@@ -164,7 +164,40 @@ export default function NotificationSettingsScreen() {
     const newSettings = { ...settings, [key]: !settings[key] };
     await saveNotificationSettings(newSettings);
     
+    // Test the specific notification type if it was enabled
+    if (newSettings[key]) {
+      await testSpecificNotification(key);
+    }
+    
     console.log(`Toggled ${key} to: ${newSettings[key]}`);
+  };
+
+  // Test specific notification type
+  const testSpecificNotification = async (notificationType) => {
+    try {
+      switch (notificationType) {
+        case 'itemAdded':
+          await notificationTriggers.triggerItemAddedNotification('Test Item', 'Test Lijst', 'Test Gebruiker');
+          break;
+        case 'listShared':
+          await notificationTriggers.triggerListSharedNotification('Test Lijst', 'Test Gebruiker', 'TEST123');
+          break;
+        case 'shoppingReminders':
+          await notificationTriggers.triggerShoppingReminderNotification('Test Lijst', 5);
+          break;
+        case 'inactivityReminders':
+          await notificationTriggers.triggerInactivityNotification();
+          break;
+        case 'weeklyReminders':
+          await notificationTriggers.scheduleWeeklyReminder();
+          Alert.alert('Wekelijkse Herinnering', 'Wekelijkse herinnering is ingepland!');
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error('Error testing notification:', error);
+    }
   };
 
   // Send test notification
