@@ -26,14 +26,11 @@ function AppContent() {
         if (user) {
           await notificationService.registerForPushNotificationsAsync();
           
-          // Schedule weekly reminder if enabled
-          await notificationTriggers.scheduleWeeklyReminder();
-          
-          // Schedule inactivity check
-          await notificationTriggers.scheduleInactivityCheck();
-          
-          // Track user activity when app opens
+          // Only track user activity when app opens (don't schedule notifications here)
           await notificationTriggers.trackUserActivity();
+          
+          // Note: Weekly reminders and inactivity checks are now only scheduled
+          // when the user explicitly enables them in the notification settings
         }
       } catch (error) {
         console.error('Error initializing notifications:', error);
