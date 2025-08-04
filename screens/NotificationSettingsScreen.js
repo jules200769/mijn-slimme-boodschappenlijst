@@ -186,11 +186,14 @@ export default function NotificationSettingsScreen() {
           await notificationTriggers.triggerShoppingReminderNotification('Test Lijst', 5);
           break;
         case 'inactivityReminders':
-          await notificationTriggers.triggerInactivityNotification();
+          // Alleen plannen, niet direct triggeren
+          await notificationTriggers.scheduleInactivityCheck();
+          Alert.alert('Inactiviteit Check', 'Inactiviteit check is ingepland voor dagelijks om 10:00!');
           break;
         case 'weeklyReminders':
+          // Alleen plannen, niet direct triggeren
           await notificationTriggers.scheduleWeeklyReminder();
-          Alert.alert('Wekelijkse Herinnering', 'Wekelijkse herinnering is ingepland!');
+          Alert.alert('Wekelijkse Herinnering', 'Wekelijkse herinnering is ingepland voor elke maandag om 9:00!');
           break;
         default:
           break;
@@ -235,15 +238,16 @@ export default function NotificationSettingsScreen() {
     }
 
     try {
-      await notificationTriggers.triggerInactivityNotification();
+      // Alleen plannen, niet direct triggeren
+      await notificationTriggers.scheduleInactivityCheck();
       Alert.alert(
-        'Inactiviteit Test',
-        'Er is een inactiviteit test notificatie verstuurd!'
+        'Inactiviteit Check Gepland',
+        'Inactiviteit check is ingepland voor dagelijks om 10:00!'
       );
     } catch (error) {
       Alert.alert(
         'Fout',
-        'Er is een fout opgetreden bij het versturen van de inactiviteit test notificatie.'
+        'Er is een fout opgetreden bij het inplannen van de inactiviteit check.'
       );
     }
   };
