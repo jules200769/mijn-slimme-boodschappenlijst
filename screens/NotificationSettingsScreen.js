@@ -16,7 +16,7 @@ export default function NotificationSettingsScreen() {
   const [hasPermissions, setHasPermissions] = useState(false);
   const [settings, setSettings] = useState({
     shoppingReminders: true,
-    itemAdded: true,
+    itemAdded: false, // Standaard uit voor nieuwe gebruikers
     listShared: true,
     weeklyReminders: false,
     inactivityReminders: true,
