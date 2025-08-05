@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -8,8 +8,39 @@ import { supabase } from '../lib/supabase';
 export default function EditNameScreen({ navigation }) {
   const { user, updateUserContext } = useAuth();
   const { colors } = useTheme();
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Haal de huidige naam op bij het laden van het scherm
+  useEffect(() => {
+    const getCurrentName = async () => {
+      try {
+        // Probeer eerst de naam uit het profiel te halen
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && profile?.full_name) {
+          setName(profile.full_name);
+        } else {
+          // Fallback naar user metadata
+          const currentName = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
+          setName(currentName);
+        }
+      } catch (error) {
+        console.log('Error getting current name:', error);
+        // Fallback naar user metadata
+        const currentName = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
+        setName(currentName);
+      }
+    };
+
+    if (user?.id) {
+      getCurrentName();
+    }
+  }, [user]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -18,20 +49,72 @@ export default function EditNameScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      // Update Supabase user metadata
-      const { error } = await supabase.auth.updateUser({ data: { name } });
-      if (error) throw error;
+      console.log('DEBUG: Starting name update...');
+      console.log('DEBUG: User ID:', user.id);
+      console.log('DEBUG: New name:', name.trim());
+
+      // Skip auth update for now and only update profiles table
+      console.log('DEBUG: Skipping auth update, updating profiles table directly...');
+      
       // Update profiles.full_name
-      const { error: profileError } = await supabase
+      console.log('DEBUG: Updating profiles table...');
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .update({ full_name: name })
-        .eq('id', user.id);
-      if (profileError) throw profileError;
+        .update({ full_name: name.trim() })
+        .eq('id', user.id)
+        .select();
+      console.log('DEBUG: Profile response - data:', profileData);
+      console.log('DEBUG: Profile response - error:', profileError);
+      
+      if (profileError) {
+        console.log('DEBUG: Profile error:', profileError);
+        throw profileError;
+      }
+      console.log('DEBUG: Profile update successful:', profileData);
+
+      // Update de user context
+      console.log('DEBUG: Updating user context...');
       await updateUserContext();
+      console.log('DEBUG: User context updated');
+      
+      // Force a manual refresh of the user data
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile?.full_name) {
+            // Update the user context with the new name
+            const updatedUser = {
+              ...session.user,
+              user_metadata: {
+                ...session.user.user_metadata,
+                name: profile.full_name
+              }
+            };
+            // Force a re-render by updating the context
+            updateUserContext();
+          }
+        }
+      } catch (error) {
+        console.log('DEBUG: Manual refresh error:', error);
+      }
+      
       Alert.alert('Succes', 'Naam is bijgewerkt', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error) {
+      console.log('DEBUG: Error updating name:', error);
+      console.log('DEBUG: Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       let msg = 'Kon naam niet wijzigen';
       if (error.message) {
         msg += `: ${error.message}`;

@@ -25,12 +25,25 @@ export const AuthProvider = ({ children }) => {
       // Haal profielfoto URL op
       const { data: photoUrl } = await profilePhotos.getProfilePhotoUrl(userData.id);
       
-      // Voeg profielfoto URL toe aan user metadata
+      // Haal naam uit profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userData.id)
+        .single();
+      
+      let displayName = userData.user_metadata?.name || userData.user_metadata?.full_name || '';
+      if (!profileError && profile?.full_name) {
+        displayName = profile.full_name;
+      }
+      
+      // Voeg profielfoto URL en naam toe aan user metadata
       const enrichedUser = {
         ...userData,
         user_metadata: {
           ...userData.user_metadata,
-          profile_photo_url: photoUrl
+          profile_photo_url: photoUrl,
+          name: displayName
         }
       };
       
@@ -123,13 +136,30 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserContext = async () => {
     try {
-      const { user: currentUser, error } = await supabase.auth.getCurrentUser();
-      if (!error && currentUser) {
-        const enrichedUser = await enrichUserData(currentUser);
+      console.log('DEBUG: updateUserContext called');
+      
+      // Get current session instead of getCurrentUser
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!error && session?.user) {
+        console.log('DEBUG: Current user from session:', session.user);
+        const enrichedUser = await enrichUserData(session.user);
+        console.log('DEBUG: Enriched user:', enrichedUser);
         setUser(enrichedUser);
+      } else {
+        console.log('DEBUG: Error getting session:', error);
+        // Fallback: try to get user from current state
+        if (user) {
+          const enrichedUser = await enrichUserData(user);
+          setUser(enrichedUser);
+        }
       }
     } catch (e) {
       console.log('Error updating user context:', e);
+      // Fallback: try to get user from current state
+      if (user) {
+        const enrichedUser = await enrichUserData(user);
+        setUser(enrichedUser);
+      }
     }
   };
 

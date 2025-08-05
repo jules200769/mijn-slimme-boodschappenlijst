@@ -1,0 +1,10 @@
+[33m677dfee[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Fix EditNameScreen completely - robust error handling for both auth and profile updates
+[33m7732ef0[m Skip auth update temporarily to test profiles table update only
+[33m376c257[m Add detailed debugging to EditNameScreen to identify exact failure point
+[33m2f9efc5[m Fix EditNameScreen - replace ThemedTextInput with regular TextInput for debugging
+[33ma85dda3[m Merge team updates with local changes
+[33m84feedc[m Lokale wijzigingen voor team update
+[33m41d3198[m Update settings screens
+[33md042bc0[m Add professional logo and splash screen - shopping cart icon with green background
+[33mc36696c[m Update AuthContext, supabase config, EditProfile and Settings screens
+[33mf2255c6[m Update app screens and documentation - team progress
