@@ -40,13 +40,13 @@ export default function AboutScreen() {
             <View style={[styles.appIcon, { backgroundColor: colors.background }]}>
               <MaterialCommunityIcons name="cart" size={48} color="#37af29" />
             </View>
-            <Text style={[styles.appName, { color: colors.text }]}>Mijn slimme Boodschappenlijst</Text>
+            <Text style={[styles.appName, { color: colors.text }]}>check it!</Text>
             <Text style={[styles.appVersion, { color: colors.textSecondary }]}>v1.0.0</Text>
           </View>
 
           {/* Welcome Section */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: '#37af29' }]}>Welkom bij Mijn slimme Boodschappenlijst</Text>
+            <Text style={[styles.sectionTitle, { color: '#37af29' }]}>Welkom bij check it!</Text>
             <Text style={[styles.bodyText, { color: colors.text }]}>
               De slimme manier om jouw boodschappen te organiseren en samen te werken. Of je nu alleen boodschappen doet of samenwerkt met familie, huisgenoten of vrienden: deze app helpt je om altijd overzicht te houden.
             </Text>

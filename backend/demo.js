@@ -10,7 +10,7 @@ const demoUser = {
 };
 
 async function testBackend() {
-  console.log('🧪 Testing Mijn slimme Boodschappenlijst Backend API...\n');
+  console.log('🧪 Testing check it! Backend API...\n');
 
   try {
     // Test 1: Register a new user

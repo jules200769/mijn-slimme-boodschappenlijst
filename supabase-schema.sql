@@ -1,4 +1,4 @@
--- Mijn slimme Boodschappenlijst Database Schema voor Supabase
+-- check it! Database Schema voor Supabase
 -- Voer dit uit in je Supabase SQL Editor
 
 -- Enable Row Level Security (RLS) - Skip this line as auth.users is managed by Supabase

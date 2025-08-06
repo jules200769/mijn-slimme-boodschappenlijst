@@ -1,4 +1,4 @@
-# App Assets - Mijn slimme Boodschappenlijst
+# App Assets - check it!
 
 ## Logo Design
 Het logo bestaat uit:
@@ -19,7 +19,7 @@ Het logo bestaat uit:
 - **Formaat**: 1242x2436 pixels (iPhone X resolutie)
 - **Achtergrond**: Wit (#ffffff)
 - **Logo**: Gecentreerd, geschikt formaat
-- **Tekst**: "Mijn slimme Boodschappenlijst" onder het logo
+- **Tekst**: "check it!" onder het logo
 
 ## Hoe te Maken
 

@@ -1,4 +1,4 @@
-# Supabase Setup voor Mijn slimme Boodschappenlijst
+# Supabase Setup voor check it!
 
 ## Stap 1: Supabase Project Aanmaken
 

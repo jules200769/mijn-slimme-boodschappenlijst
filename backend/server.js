@@ -25,7 +25,7 @@ app.use('/api/auth', require('./routes/auth'));
 
 // Basic route for testing
 app.get('/', (req, res) => {
-  res.json({ message: 'Mijn slimme Boodschappenlijst Auth API is running!' });
+      res.json({ message: 'check it! Auth API is running!' });
 });
 
 // Error handling middleware

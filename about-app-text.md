@@ -1,6 +1,6 @@
 # Over deze app
 
-## Welkom bij Mijn slimme Boodschappenlijst
+## Welkom bij check it!
 
 De slimme manier om jouw boodschappen te organiseren en samen te werken. Of je nu alleen boodschappen doet of samenwerkt met familie, huisgenoten of vrienden: deze app helpt je om altijd overzicht te houden.
 

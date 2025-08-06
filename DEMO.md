@@ -1,4 +1,4 @@
-# 🚀 Mijn slimme Boodschappenlijst - Demo Guide
+# 🚀 check it! - Demo Guide
 
 A clean, simple demo of your AI assistant with optional authentication.
 

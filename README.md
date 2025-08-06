@@ -1,4 +1,4 @@
-# Mijn Slimme Boodschappenlijst
+# check it!
 
 Een React Native/Expo applicatie voor het beheren van boodschappenlijsten met real-time samenwerking.
 
