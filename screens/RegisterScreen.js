@@ -162,6 +162,7 @@ const RegisterScreen = ({ navigation }) => {
               loading={loading}
               disabled={loading}
               style={[styles.button, { backgroundColor: colors.primary }]}
+              labelStyle={{ color: colors.buttonText }}
             >
               Create Account
             </Button>

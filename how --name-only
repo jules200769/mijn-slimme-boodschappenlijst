@@ -1,0 +1,13 @@
+[33mcommit 7a00ac0fae772a7b6e10f8deb4806b7b3dd32dab[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: jules200769 <julez.roelen@gmail.com>
+Date:   Tue Aug 5 17:10:38 2025 +0200
+
+    Update progress - auto login functionality and improvements
+
+ contexts/AuthContext.js                            |  40 [32m++[m[31m-[m
+ h                                                  |   5 [32m+[m
+ ...eScreen implementation that worked\357\200\242" |  10 [32m+[m
+ ql                                                 | 324 [32m+++++++++++++++++++++[m
+ screens/EditNameScreen.js                          | 101 [32m++++++[m[31m-[m
+ supabase-schema.sql                                |  44 [32m++[m[31m-[m
+ 6 files changed, 504 insertions(+), 20 deletions(-)

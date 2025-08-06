@@ -61,22 +61,25 @@ export const ThemeProvider = ({ children }) => {
       textTertiary: isDarkMode ? '#666666' : '#bbbbbb',
       
       // Accent kleuren
-      primary: isDarkMode ? '#bb86fc' : '#7c4dff',
-      primaryLight: isDarkMode ? '#d4a4ff' : '#e0e0ff',
+      primary: isDarkMode ? '#37af29' : '#37af29',
+      primaryLight: isDarkMode ? '#e8f5e8' : '#e8f5e8',
       
       // Borders en dividers
       border: isDarkMode ? '#333333' : '#f0f0f0',
       divider: isDarkMode ? '#333333' : '#f0f0f0',
       
       // Status kleuren
-      success: isDarkMode ? '#4caf50' : '#4caf50',
+      success: isDarkMode ? '#37af29' : '#37af29',
       error: isDarkMode ? '#f44336' : '#e53935',
       warning: isDarkMode ? '#ff9800' : '#ff9800',
       
       // Switch kleuren
       switchTrack: isDarkMode ? '#666666' : '#e0e0e0',
       switchThumb: isDarkMode ? '#ffffff' : '#ffffff',
-      switchActive: isDarkMode ? '#bb86fc' : '#4caf50',
+      switchActive: isDarkMode ? '#37af29' : '#37af29',
+      
+      // Button kleuren
+      buttonText: isDarkMode ? '#ffffff' : '#ffffff',
     }
   };
 

@@ -36,7 +36,7 @@ export default function AboutScreen() {
           {/* App Icon/Logo */}
           <View style={styles.appIconContainer}>
             <View style={styles.appIcon}>
-              <MaterialCommunityIcons name="cart" size={48} color="#4CAF50" />
+              <MaterialCommunityIcons name="cart" size={48} color="#37af29" />
             </View>
             <Text style={styles.appName}>Mijn slimme Boodschappenlijst</Text>
             <Text style={styles.appVersion}>v1.0.0</Text>
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4CAF50',
+            color: '#37af29',
     marginBottom: 6,
   },
   bodyText: {

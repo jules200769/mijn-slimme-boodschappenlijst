@@ -45,7 +45,7 @@ Het logo bestaat uit:
 - **Accent Kleuren**: 
   - Oranje: #FF9800
   - Blauw: #2196F3
-  - Paars: #9C27B0
+  - Groen: #4CAF50
   - Rood: #F44336
   - Goud: #FFD700
 

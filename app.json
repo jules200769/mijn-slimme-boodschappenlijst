@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "center",
-      "backgroundColor": "#4CAF50"
+      "backgroundColor": "#37af29"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,22 +20,22 @@
       "package": "com.mijnslimmeboodschappenlijst.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#4CAF50"
+        "backgroundColor": "#37af29"
       }
     },
     "scheme": "mijn-slimme-boodschappenlijst",
     "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#4CAF50"
-        }
-      ]
+              [
+          "expo-notifications",
+          {
+            "icon": "./assets/icon.png",
+            "color": "#37af29"
+          }
+        ]
     ],
     "notification": {
       "icon": "./assets/icon.png",
-      "color": "#4CAF50"
+      "color": "#37af29"
     }
   }
 }

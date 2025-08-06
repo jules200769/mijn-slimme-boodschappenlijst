@@ -9,7 +9,7 @@ export default function ProgressBar({ progress = 0, height = 8, style }) {
           styles.fill,
           {
             width: `${Math.max(0, Math.min(progress, 1)) * 100}%`,
-            backgroundColor: '#4caf50',
+            backgroundColor: '#37af29',
             borderRadius: height / 2,
             height: '100%',
           },

@@ -7,7 +7,7 @@ export default function PrimaryButton({ title, onPress, style, fullWidth = false
       onPress={onPress}
       style={[
         styles.button,
-        { backgroundColor: '#4caf50', shadowColor: '#388e3c' },
+        { backgroundColor: '#37af29', shadowColor: '#37af29' },
         fullWidth && { alignSelf: 'stretch' },
         style,
       ]}
