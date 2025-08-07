@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Team Setup Script voor Mijn Slimme Boodschappenlijst
+# Team Setup Script voor check it!
 echo "🚀 Welkom bij het team setup script!"
 
 # Check of git geïnstalleerd is

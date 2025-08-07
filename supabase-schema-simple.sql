@@ -1,4 +1,4 @@
--- Mijn slimme Boodschappenlijst Database Schema voor Supabase (Vereenvoudigd)
+-- check it! Database Schema voor Supabase (Vereenvoudigd)
 -- Voer dit uit in je Supabase SQL Editor
 
 -- Tabel voor gebruikers profielen

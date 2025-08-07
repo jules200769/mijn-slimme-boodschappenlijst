@@ -1,4 +1,4 @@
--- Feedback tabel voor Mijn slimme Boodschappenlijst
+-- Feedback tabel voor check it!
 -- Voer dit uit in je Supabase SQL Editor
 
 -- Tabel voor feedback
