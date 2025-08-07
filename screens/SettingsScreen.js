@@ -92,11 +92,7 @@ export default function SettingsScreen() {
             <Text style={[styles.rowText, { color: colors.text }]}>Over deze app</Text>
             <MaterialCommunityIcons name="information-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
-          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-          <TouchableOpacity style={styles.row}>
-                            <Text style={[styles.rowText, { color: colors.text }]}>Tutorial</Text>
-            <MaterialCommunityIcons name="school-outline" size={24} color={colors.textTertiary} />
-          </TouchableOpacity>
+
           {/* Uitloggen knop onderaan */}
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           <TouchableOpacity style={styles.row} onPress={signOut}>

@@ -185,7 +185,7 @@ const PRODUCT_CATEGORIE_MAPPING = {
 
 export default function GroceryListScreen() {
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [lijsten, setLijsten] = useState([]);
   const [geselecteerdeLijst, setGeselecteerdeLijst] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -418,6 +418,9 @@ export default function GroceryListScreen() {
 
   // 1. Voeg een state toe voor de prijsweergave
   const [toonPrijzen, setToonPrijzen] = useState(false);
+
+  // Bulk selectie states  
+  const [geselecteerdeProducten, setGeselecteerdeProducten] = useState([]);
 
   // 2. Nieuwe menu-modal component
   const [toonNieuwMenuModal, setToonNieuwMenuModal] = useState(false);
@@ -728,6 +731,74 @@ export default function GroceryListScreen() {
     } else {
       Alert.alert('Fout', 'Kon product niet toevoegen');
     }
+  };
+
+  // Bulk selectie functies
+  const handleProductSelecteren = (productNaam) => {
+    setGeselecteerdeProducten(prev => {
+      if (prev.includes(productNaam)) {
+        return prev.filter(p => p !== productNaam);
+      } else {
+        return [...prev, productNaam];
+      }
+    });
+  };
+
+  const handleBulkProductenToevoegen = async () => {
+    if (!geselecteerdeLijst || geselecteerdeProducten.length === 0) return;
+
+    const aantalProducten = geselecteerdeProducten.length;
+
+    const nieuweProducten = geselecteerdeProducten.map((productNaam, index) => {
+      const { categorie, emoji } = getProductCategorie(productNaam);
+      return {
+        id: (Date.now() + index).toString() + Math.random().toString(36).substr(2, 5),
+        naam: productNaam,
+        checked: false,
+        hoeveelheid: '1',
+        eenheid: 'stuks',
+        categorie: categorie,
+        categorieEmoji: emoji,
+      };
+    });
+
+    const nieuweLijst = {
+      ...geselecteerdeLijst,
+      items: [...geselecteerdeLijst.items, ...nieuweProducten]
+    };
+
+    // Update in Supabase
+    let error = null;
+    if (geselecteerdeLijst.code) {
+      // Gedeelde lijst
+      ({ error } = await sharedLists.updateSharedList(geselecteerdeLijst.code, { items: nieuweLijst.items }));
+    } else {
+      // Persoonlijke lijst
+      ({ error } = await lists.updateList(geselecteerdeLijst.id, { items: nieuweLijst.items }));
+    }
+
+    if (!error) {
+      // Update lokale state alleen bij succes
+      const nieuweLijsten = lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l);
+      setLijsten(nieuweLijsten);
+      setGeselecteerdeLijst(nieuweLijst);
+      
+      // Reset bulk selectie
+      setGeselecteerdeProducten([]);
+      setToonProductModal(false);
+      
+      // Track user activity
+      await notificationTriggers.trackUserActivity();
+      
+      // Toon success bericht
+      Alert.alert('Toegevoegd!', `${aantalProducten} product${aantalProducten !== 1 ? 'en' : ''} toegevoegd aan je lijst!`);
+    } else {
+      Alert.alert('Fout', 'Kon producten niet toevoegen');
+    }
+  };
+
+  const handleBulkSelectieReset = () => {
+    setGeselecteerdeProducten([]);
   };
 
   // Product afvinken
@@ -1229,7 +1300,10 @@ export default function GroceryListScreen() {
             {geselecteerdeLijst.items.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>Nog geen producten</Text>
-            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setToonProductModal(true)}>
+            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => {
+              setToonProductModal(true);
+              handleBulkSelectieReset();
+            }}>
               <MaterialCommunityIcons name="plus" size={24} color="#fff" />
                   <Text style={[styles.addButtonText, { color: '#fff' }]}>PRODUCT TOEVOEGEN</Text>
             </TouchableOpacity>
@@ -1268,6 +1342,7 @@ export default function GroceryListScreen() {
                   setProductZoek('');
                   setToonZoekResultaten(false);
                   setToonDuplicaatModal(false); // Reset duplicaat modal
+                  handleBulkSelectieReset(); // Reset bulk selectie
                 }}
               >
                 <MaterialCommunityIcons name="plus" size={24} color="#fff" />
@@ -1346,7 +1421,10 @@ export default function GroceryListScreen() {
       {geselecteerdeLijst.items.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>Nog geen producten</Text>
-            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setToonProductModal(true)}>
+            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => {
+              setToonProductModal(true);
+              handleBulkSelectieReset();
+            }}>
               <MaterialCommunityIcons name="plus" size={24} color="#fff" />
             <Text style={[styles.addButtonText, { color: colors.buttonText }]}>PRODUCT TOEVOEGEN</Text>
           </TouchableOpacity>
@@ -1387,6 +1465,7 @@ export default function GroceryListScreen() {
             setProductZoek('');
             setToonZoekResultaten(false);
             setToonDuplicaatModal(false); // Reset duplicaat modal
+            handleBulkSelectieReset(); // Reset bulk selectie
           }}
         >
           <MaterialCommunityIcons name="plus" size={24} color="#fff" />
@@ -1404,15 +1483,27 @@ export default function GroceryListScreen() {
         <View style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}>
           <View style={[{ backgroundColor: colors.surface, height: '90%', minHeight: 600, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, width: '100%' }]}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setToonProductModal(false)}>
+              <TouchableOpacity onPress={() => {
+                setToonProductModal(false);
+                handleBulkSelectieReset();
+              }}>
                 <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Product toevoegen</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Producten selecteren
+              </Text>
               <View style={{ width: 28 }} />
             </View>
 
             <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20, color: colors.text }}>Stel jouw lijstje samen</Text>
+              <Text style={{ fontWeight: 'bold', fontSize: 20, color: colors.text }}>
+                Selecteer producten voor je lijst
+              </Text>
+              {geselecteerdeProducten.length > 0 && (
+                <Text style={{ fontSize: 16, color: colors.primary, marginTop: 4 }}>
+                  {geselecteerdeProducten.length} product{geselecteerdeProducten.length !== 1 ? 'en' : ''} geselecteerd
+                </Text>
+              )}
             </View>
 
             <View style={{ position: 'relative' }}>
@@ -1459,7 +1550,9 @@ export default function GroceryListScreen() {
   return (
                     <FlatList
                       data={resultaten}
-                      renderItem={({ item }) => (
+                      renderItem={({ item }) => {
+                        const isSelected = geselecteerdeProducten.includes(item.naam);
+                        return (
           <TouchableOpacity 
                           style={[
                             item.type === 'categorie' 
@@ -1476,7 +1569,16 @@ export default function GroceryListScreen() {
                                   shadowOpacity: 0.1,
                                   shadowRadius: 4,
                                 }
-                              : [styles.productOption, { backgroundColor: colors.surface }]
+                              : [styles.productOption, { 
+                                  backgroundColor: isSelected ? (isDarkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)') : colors.surface,
+                                  borderColor: isSelected ? '#4CAF50' : colors.divider,
+                                  borderWidth: isSelected ? 2 : 1,
+                                  shadowColor: isDarkMode ? '#000' : '#4CAF50',
+                                  shadowOffset: { width: 0, height: 1 },
+                                  shadowOpacity: isSelected ? (isDarkMode ? 0.4 : 0.1) : 0,
+                                  shadowRadius: isSelected ? 2 : 0,
+                                  elevation: isSelected ? 1 : 0
+                                }]
                           ]}
                                                   onPress={async () => {
                           if (item.type === 'categorie') {
@@ -1484,13 +1586,8 @@ export default function GroceryListScreen() {
                             setProductZoek('');
                             setToonZoekResultaten(false);
                           } else {
-                            // Voeg product toe (duplicaat check wordt gedaan in handleProductToevoegen)
-                            const result = await handleProductToevoegen(item.naam);
-                            // Alleen de modal sluiten als er geen duplicaat is
-                            if (!result || !result.isDuplicaat) {
-                              setProductZoek('');
-                              setToonZoekResultaten(false);
-                            }
+                            // Altijd selecteer/deselecteer product
+                            handleProductSelecteren(item.naam);
                           }
                         }}
                         >
@@ -1513,12 +1610,19 @@ export default function GroceryListScreen() {
                             </>
                           ) : (
                             <>
-                              <MaterialCommunityIcons name="plus" size={24} color={colors.success} />
+                              <MaterialCommunityIcons 
+                                name={isSelected ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"} 
+                                size={26} 
+                                color={isSelected ? '#4CAF50' : colors.textSecondary} 
+                              />
                               <View style={{ flex: 1 }}>
                                 <HighlightedText 
                                   text={item.naam}
                                   highlight={productZoek}
-                                  style={[styles.productOptionText, { color: colors.text }]}
+                                  style={[styles.productOptionText, { 
+                                    color: colors.text,
+                                    fontWeight: isSelected ? 'bold' : 'normal'
+                                  }]}
                                   showHighlight={showHighlighting}
                                   colors={colors}
                                 />
@@ -1529,7 +1633,8 @@ export default function GroceryListScreen() {
                             </>
                           )}
             </TouchableOpacity>
-                      )}
+                        );
+                      }}
                       keyExtractor={item => `${item.type}-${item.naam}`}
                       style={{ flex: 1 }}
                     />
@@ -1579,22 +1684,81 @@ export default function GroceryListScreen() {
                 <View style={{ flex: 1 }}>
                   <FlatList
                     data={(PRODUCT_CATEGORIE_MAPPING[gekozenCategorie] || []).filter(p => p.toLowerCase().includes(productZoek.toLowerCase()))}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity 
-                        style={[styles.productOption, { backgroundColor: colors.surface, borderBottomColor: colors.divider }]}
-                        onPress={async () => {
-                          // Voeg product toe (duplicaat check wordt gedaan in handleProductToevoegen)
-                          await handleProductToevoegen(item);
-                        }}
-                      >
-                        <MaterialCommunityIcons name="plus" size={24} color={colors.textSecondary} />
-                        <Text style={[styles.productOptionText, { color: colors.text }]}>{item}</Text>
-                      </TouchableOpacity>
-                    )}
+                    renderItem={({ item }) => {
+                      const isSelected = geselecteerdeProducten.includes(item);
+                      return (
+                        <TouchableOpacity 
+                          style={[styles.productOption, { 
+                            backgroundColor: isSelected ? (isDarkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)') : colors.surface, 
+                            borderBottomColor: colors.divider,
+                            borderColor: isSelected ? '#4CAF50' : colors.divider,
+                            borderWidth: isSelected ? 2 : 1,
+                            borderBottomWidth: 1,
+                            shadowColor: isDarkMode ? '#000' : '#4CAF50',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: isSelected ? (isDarkMode ? 0.3 : 0.08) : 0,
+                            shadowRadius: isSelected ? 2 : 0,
+                            elevation: isSelected ? 1 : 0,
+                            marginVertical: isSelected ? 1 : 0,
+                            marginHorizontal: isSelected ? 2 : 0,
+                            borderRadius: isSelected ? 8 : 0
+                          }]}
+                          onPress={() => {
+                            // Altijd selecteer/deselecteer product
+                            handleProductSelecteren(item);
+                          }}
+                        >
+                          <MaterialCommunityIcons 
+                            name={isSelected ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"} 
+                            size={26} 
+                            color={isSelected ? '#4CAF50' : colors.textSecondary} 
+                          />
+                          <Text style={[styles.productOptionText, { 
+                            color: colors.text,
+                            fontWeight: isSelected ? 'bold' : 'normal'
+                          }]}>{item}</Text>
+                        </TouchableOpacity>
+                      );
+                    }}
                     keyExtractor={item => item}
                   />
                 </View>
               </>
+            )}
+
+            {/* Bulk selectie floating action button */}
+            {geselecteerdeProducten.length > 0 && (
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  bottom: 24,
+                  right: 24,
+                  backgroundColor: '#4CAF50',
+                  borderRadius: 28,
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  shadowColor: isDarkMode ? '#000' : '#4CAF50',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDarkMode ? 0.5 : 0.15,
+                  shadowRadius: 4,
+                  elevation: 4,
+                  borderWidth: 1,
+                  borderColor: '#45a049'
+                }}
+                onPress={handleBulkProductenToevoegen}
+              >
+                <MaterialCommunityIcons name="check" size={26} color="#fff" />
+                <Text style={{ 
+                  color: '#fff', 
+                  fontWeight: 'bold', 
+                  fontSize: 17, 
+                  marginLeft: 10 
+                }}>
+                  TOEVOEGEN ({geselecteerdeProducten.length})
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>
