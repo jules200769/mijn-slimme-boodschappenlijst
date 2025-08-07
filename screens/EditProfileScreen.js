@@ -164,7 +164,6 @@ export default function EditProfileScreen({ navigation }) {
       setLoading(false);
     }
   };
-
   const handleDeleteAccount = async () => {
     if (!user) return;
     Alert.alert(
@@ -241,7 +240,7 @@ export default function EditProfileScreen({ navigation }) {
             {`"${displayName}"`}
           </Text>
         </View>
-        {/* Witte kaart met opties */}
+        
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EditName')}>
             <Text style={[styles.rowText, { color: colors.text }]}>Naam bewerken</Text>
@@ -370,8 +369,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   deleteAccountText: {
-    fontSize: 15,
-    textDecorationLine: 'underline',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   currentEmail: {
     fontSize: 13,
