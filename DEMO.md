@@ -8,25 +8,14 @@ A clean, simple demo of your AI assistant with optional authentication.
 - **Optional Authentication**: Login or use as guest
 - **Modern UI**: Clean, minimalist design
 - **Mobile Optimized**: Swipe gestures, keyboard handling
-- **Backend API**: Node.js with MongoDB
+- **Backend**: Supabase (cloud database)
 
 ## 🛠️ Quick Setup
 
-### 1. Start the Backend
+### 1. Start the App
 ```bash
-cd backend
-npm run dev
+npx expo start
 ```
-The server will run on `http://localhost:5000`
-
-### 2. Test the Backend (Optional)
-```bash
-cd backend
-node demo.js
-```
-This will create a demo user and test all API endpoints.
-
-### 3. Start the Frontend
 ```bash
 npx expo start
 ```
@@ -74,18 +63,13 @@ npx expo start
 - API timeout handling
 - User-friendly error cards
 
-## 🔧 Backend API
+## 🔧 App Architecture
 
-### Endpoints
-- `POST /api/auth/register` - Create account
-- `POST /api/auth/login` - Sign in
-- `GET /api/auth/profile` - Get user info
-- `PUT /api/auth/profile` - Update profile
-
-### Database
-- MongoDB with User model
-- Password hashing with bcrypt
-- JWT token authentication
+### Frontend
+- React Native with Expo
+- Supabase for authentication and database
+- Real-time data synchronization
+- Push notifications
 
 ## 🎨 UI Components
 

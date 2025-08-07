@@ -6,7 +6,7 @@ Een React Native/Expo applicatie voor het beheren van boodschappenlijsten met re
 
 - Real-time boodschappenlijst beheer
 - Gebruiker authenticatie
-- Supabase backend integratie
+- Supabase cloud database integratie
 - Team samenwerking
 - Push notificaties
 - Offline functionaliteit
@@ -14,7 +14,7 @@ Een React Native/Expo applicatie voor het beheren van boodschappenlijsten met re
 ## 🛠️ Tech Stack
 
 - **Frontend**: React Native, Expo
-- **Backend**: Supabase
+- **Backend**: Supabase (cloud database)
 - **State Management**: React Context
 - **Navigation**: React Navigation
 - **UI Components**: React Native Paper
@@ -57,7 +57,7 @@ npm start
 ├── lib/               # Utility functies en configuratie
 ├── navigation/         # Navigatie configuratie
 ├── screens/           # App schermen
-├── backend/           # Backend code
+├── lib/              # Utility libraries
 └── assets/            # Afbeeldingen en iconen
 ```
 

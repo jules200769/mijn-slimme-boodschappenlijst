@@ -15,11 +15,10 @@ Het logo bestaat uit:
 - **Logo**: Centered shopping cart design
 - **Hoeken**: Afgerond voor moderne app stores
 
-### 2. Splash Screen (splash.png)
-- **Formaat**: 1242x2436 pixels (iPhone X resolutie)
-- **Achtergrond**: Wit (#ffffff)
-- **Logo**: Gecentreerd, geschikt formaat
-- **Tekst**: "check it!" onder het logo
+### 2. Splash Screen
+- **Achtergrond**: Groen (#37af29)
+- **Geen afbeelding**: Alleen groene achtergrond
+- **Geen tekst**: Minimalistisch design
 
 ## Hoe te Maken
 
@@ -52,5 +51,5 @@ Het logo bestaat uit:
 ## Export Instellingen
 - **Format**: PNG
 - **Quality**: 100%
-- **Background**: Transparent voor icon, wit voor splash
+- **Background**: Transparent voor icon
 - **Anti-aliasing**: Enabled 
