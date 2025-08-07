@@ -83,7 +83,7 @@ export default function SettingsScreen() {
             <MaterialCommunityIcons name="message-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-          <TouchableOpacity style={styles.row}>
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('HelpSupport')}>
             <Text style={[styles.rowText, { color: colors.text }]}>Help & Support</Text>
             <MaterialCommunityIcons name="help-circle-outline" size={24} color={colors.textTertiary} />
           </TouchableOpacity>

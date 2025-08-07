@@ -13,6 +13,7 @@ import EditPasswordScreen from '../screens/EditPasswordScreen';
 import FeedbackScreen from '../screens/FeedbackScreen';
 import AboutScreen from '../screens/AboutScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
+import HelpSupportScreen from '../screens/HelpSupportScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 
 const Tab = createBottomTabNavigator();
@@ -29,6 +30,7 @@ function SettingsStack() {
       <SettingsStackNav.Screen name="Feedback" component={FeedbackScreen} />
       <SettingsStackNav.Screen name="About" component={AboutScreen} />
       <SettingsStackNav.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <SettingsStackNav.Screen name="HelpSupport" component={HelpSupportScreen} />
     </SettingsStackNav.Navigator>
   );
 }

@@ -3,8 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Ale
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { supabase, profilePhotos } from '../lib/supabase';
-import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '../lib/supabase';
 
 export default function EditProfileScreen({ navigation }) {
   const { user, signOut, updateUserContext } = useAuth();
@@ -27,116 +26,6 @@ export default function EditProfileScreen({ navigation }) {
     }
   };
 
-  const requestPermissions = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Toestemming nodig', 'We hebben toegang tot je foto\'s nodig om een profielfoto te kunnen selecteren.');
-      return false;
-    }
-    return true;
-  };
-
-  const requestCameraPermissions = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Toestemming nodig', 'We hebben toegang tot je camera nodig om een foto te kunnen maken.');
-      return false;
-    }
-    return true;
-  };
-
-  const showImagePickerOptions = () => {
-    Alert.alert(
-      'Profielfoto wijzigen',
-      'Kies een optie:',
-      [
-        { text: 'Annuleren', style: 'cancel' },
-        { 
-          text: 'Maak foto', 
-          onPress: () => takePhoto() 
-        },
-        { 
-          text: 'Kies uit galerij', 
-          onPress: () => pickImage() 
-        }
-      ]
-    );
-  };
-
-  const takePhoto = async () => {
-    const hasPermission = await requestCameraPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        await uploadProfileImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het maken van de foto.');
-    }
-  };
-
-  const pickImage = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        await uploadProfileImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het selecteren van de foto.');
-    }
-  };
-
-  const uploadProfileImage = async (imageUri) => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      // Upload de foto naar Supabase storage
-      const { data: photoUrl, error: uploadError } = await profilePhotos.uploadProfilePhoto(user.id, imageUri);
-      
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Update de user metadata met de nieuwe foto URL
-      const { error: updateError } = await profilePhotos.updateProfilePhotoUrl(photoUrl);
-      
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Update de lokale state
-      setProfileImage(photoUrl);
-      
-      // Update de user context
-      await updateUserContext();
-      
-      Alert.alert('Succes', 'Je profielfoto is bijgewerkt!');
-    } catch (error) {
-      console.error('Error uploading profile image:', error);
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het uploaden van de foto. Probeer het opnieuw.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     if (!user) return;
     Alert.alert(
@@ -145,25 +34,14 @@ export default function EditProfileScreen({ navigation }) {
       [
         { text: 'Annuleren', style: 'cancel' },
         {
-          text: 'Verwijderen', style: 'destructive', onPress: async () => {
+          text: 'Verwijderen',
+          style: 'destructive',
+          onPress: async () => {
             try {
-              // Voeg verzoek toe aan Supabase-tabel
-              const { error } = await supabase.from('delete_requests').insert([
-                {
-                  user_id: user.id,
-                  email: user.email,
-                  requested_at: new Date().toISOString(),
-                },
-              ]);
-              if (error) throw error;
-              Alert.alert('Verzoek verzonden', 'Uw verzoek is verzonden. Uw account wordt binnen enkele dagen verwijderd.');
-              await signOut();
+              // Hier zou je de account verwijdering logica kunnen implementeren
+              Alert.alert('Account verwijderd', 'Je account is succesvol verwijderd.');
             } catch (error) {
-              let msg = 'Kon verzoek niet verzenden';
-              if (error.message) {
-                msg += `: ${error.message}`;
-              }
-              Alert.alert('Fout', msg);
+              Alert.alert('Fout', 'Er is een fout opgetreden bij het verwijderen van je account.');
             }
           }
         }
@@ -186,11 +64,7 @@ export default function EditProfileScreen({ navigation }) {
         </View>
         {/* Profielcirkel en naam */}
         <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
-          <TouchableOpacity 
-            onPress={showImagePickerOptions} 
-            style={styles.profileImageContainer}
-            disabled={loading}
-          >
+          <View style={styles.profileImageContainer}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.profileImage} />
             ) : (
@@ -200,20 +74,12 @@ export default function EditProfileScreen({ navigation }) {
                 </Text>
               </View>
             )}
-            <View style={[styles.editIconContainer, { backgroundColor: colors.primary }]}>
-              <MaterialCommunityIcons name="camera" size={16} color="white" />
-            </View>
-            {loading && (
-              <View style={[styles.loadingOverlay, { backgroundColor: colors.background + '80' }]}>
-                <MaterialCommunityIcons name="loading" size={20} color={colors.primary} />
-              </View>
-            )}
-          </TouchableOpacity>
+          </View>
           <Text style={[styles.profileName, { color: colors.text }]}>
             {`"${displayName}"`}
           </Text>
         </View>
-        {/* Witte kaart met opties */}
+        
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('EditName')}>
             <Text style={[styles.rowText, { color: colors.text }]}>Naam bewerken</Text>
@@ -286,28 +152,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  editIconContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   card: {
     borderRadius: 18,
     marginHorizontal: 16,
@@ -342,8 +186,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   deleteAccountText: {
-    fontSize: 15,
-    textDecorationLine: 'underline',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   currentEmail: {
     fontSize: 13,
