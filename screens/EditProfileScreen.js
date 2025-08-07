@@ -108,17 +108,34 @@ export default function EditProfileScreen({ navigation }) {
     
     setLoading(true);
     try {
+      console.log('Starting profile photo upload for user:', user.id);
+      
+      // Controleer eerst of de storage bucket bestaat
+      const { exists: bucketExists, error: bucketError } = await profilePhotos.checkStorageBucket();
+      if (bucketError) {
+        console.error('Bucket check error:', bucketError);
+      }
+      
+      if (!bucketExists) {
+        Alert.alert('Configuratie Fout', 'De profielfoto storage is niet geconfigureerd. Neem contact op met de ontwikkelaar.');
+        return;
+      }
+      
       // Upload de foto naar Supabase storage
       const { data: photoUrl, error: uploadError } = await profilePhotos.uploadProfilePhoto(user.id, imageUri);
       
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
+      console.log('Photo uploaded, updating metadata...');
+      
       // Update de user metadata met de nieuwe foto URL
       const { error: updateError } = await profilePhotos.updateProfilePhotoUrl(photoUrl);
       
       if (updateError) {
+        console.error('Metadata update error:', updateError);
         throw updateError;
       }
 
@@ -131,7 +148,18 @@ export default function EditProfileScreen({ navigation }) {
       Alert.alert('Succes', 'Je profielfoto is bijgewerkt!');
     } catch (error) {
       console.error('Error uploading profile image:', error);
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het uploaden van de foto. Probeer het opnieuw.');
+      
+      let errorMessage = 'Er is een fout opgetreden bij het uploaden van de foto. Probeer het opnieuw.';
+      
+      if (error.message) {
+        if (error.message.includes('storage')) {
+          errorMessage = 'Probleem met foto opslag. Controleer je internetverbinding en probeer het opnieuw.';
+        } else if (error.message.includes('permission')) {
+          errorMessage = 'Geen toestemming om foto\'s te uploaden. Controleer je instellingen.';
+        }
+      }
+      
+      Alert.alert('Fout', errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1558,16 +1558,16 @@ export default function GroceryListScreen() {
                             item.type === 'categorie' 
                               ? {
                                   backgroundColor: colors.background,
-                                  borderRadius: 16,
+                                  borderRadius: 12,
                                   padding: 20,
                                   marginBottom: 12,
                                   flexDirection: 'row',
                                   alignItems: 'center',
-                                  elevation: 3,
+                                  elevation: 2,
                                   shadowColor: '#000',
-                                  shadowOffset: { width: 0, height: 2 },
-                                  shadowOpacity: 0.1,
-                                  shadowRadius: 4,
+                                  shadowOffset: { width: 0, height: 1 },
+                                  shadowOpacity: 0.08,
+                                  shadowRadius: 3,
                                 }
                               : [styles.productOption, { 
                                   backgroundColor: isSelected ? (isDarkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)') : colors.surface,
@@ -1577,7 +1577,10 @@ export default function GroceryListScreen() {
                                   shadowOffset: { width: 0, height: 1 },
                                   shadowOpacity: isSelected ? (isDarkMode ? 0.4 : 0.1) : 0,
                                   shadowRadius: isSelected ? 2 : 0,
-                                  elevation: isSelected ? 1 : 0
+                                  elevation: isSelected ? 1 : 0,
+                                  borderRadius: 8,
+                                  marginVertical: 1,
+                                  marginHorizontal: 2
                                 }]
                           ]}
                                                   onPress={async () => {
@@ -1699,9 +1702,9 @@ export default function GroceryListScreen() {
                             shadowOpacity: isSelected ? (isDarkMode ? 0.3 : 0.08) : 0,
                             shadowRadius: isSelected ? 2 : 0,
                             elevation: isSelected ? 1 : 0,
-                            marginVertical: isSelected ? 1 : 0,
-                            marginHorizontal: isSelected ? 2 : 0,
-                            borderRadius: isSelected ? 8 : 0
+                            marginVertical: 1,
+                            marginHorizontal: 2,
+                            borderRadius: 8
                           }]}
                           onPress={() => {
                             // Altijd selecteer/deselecteer product

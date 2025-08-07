@@ -22,8 +22,11 @@ export const AuthProvider = ({ children }) => {
     if (!userData) return userData;
     
     try {
+      console.log('Enriching user data for:', userData.id);
+      
       // Haal profielfoto URL op
       const { data: photoUrl } = await profilePhotos.getProfilePhotoUrl(userData.id);
+      console.log('Retrieved photo URL:', photoUrl);
       
       // Haal naam uit profiles table
       const { data: profile, error: profileError } = await supabase
@@ -42,10 +45,16 @@ export const AuthProvider = ({ children }) => {
         ...userData,
         user_metadata: {
           ...userData.user_metadata,
-          profile_photo_url: photoUrl,
+          profile_photo_url: photoUrl || userData.user_metadata?.profile_photo_url,
           name: displayName
         }
       };
+      
+      console.log('Enriched user data:', {
+        id: enrichedUser.id,
+        name: enrichedUser.user_metadata?.name,
+        photoUrl: enrichedUser.user_metadata?.profile_photo_url
+      });
       
       return enrichedUser;
     } catch (error) {
