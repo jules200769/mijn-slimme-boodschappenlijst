@@ -1694,10 +1694,10 @@ export default function GroceryListScreen() {
                         <TouchableOpacity 
                           style={[styles.productOption, { 
                             backgroundColor: isSelected ? (isDarkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)') : colors.surface, 
-                            borderBottomColor: colors.divider,
+                            borderBottomColor: isSelected ? '#4CAF50' : colors.divider,
                             borderColor: isSelected ? '#4CAF50' : colors.divider,
                             borderWidth: isSelected ? 2 : 1,
-                            borderBottomWidth: 1,
+                            borderBottomWidth: isSelected ? 2 : 1,
                             shadowColor: isDarkMode ? '#000' : '#4CAF50',
                             shadowOffset: { width: 0, height: 1 },
                             shadowOpacity: isSelected ? (isDarkMode ? 0.3 : 0.08) : 0,
