@@ -1380,6 +1380,7 @@ export default function GroceryListScreen() {
                     placeholder="Nieuwe lijst"
                     placeholderTextColor={colors.textTertiary}
                     placeholderStyle={{ fontWeight: '700' }}
+                    keyboardAppearance={colors.isDark ? 'dark' : 'light'}
                   value={nieuweLijstNaam}
                   onChangeText={setNieuweLijstNaam}
                   autoFocus

@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 
 export default function EditNameScreen({ navigation }) {
   const { user, updateUserContext } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -146,6 +146,7 @@ export default function EditNameScreen({ navigation }) {
           onChangeText={setName}
           placeholder="Voer je naam in"
           placeholderTextColor={colors.textSecondary}
+          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
           autoFocus
         />
         <TouchableOpacity 

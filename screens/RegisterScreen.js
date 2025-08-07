@@ -24,7 +24,7 @@ const RegisterScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -86,6 +86,7 @@ const RegisterScreen = ({ navigation }) => {
               onChangeText={setName}
               mode="outlined"
               style={styles.input}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -106,6 +107,7 @@ const RegisterScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -125,6 +127,7 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -144,6 +147,7 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,

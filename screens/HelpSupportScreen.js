@@ -23,7 +23,7 @@ import { supabase } from '../lib/supabase';
 
 export default function HelpSupportScreen() {
   const navigation = useNavigation();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const { user } = useAuth();
   const [expandedCategories, setExpandedCategories] = useState({});
   const [expandedQuestions, setExpandedQuestions] = useState({});
@@ -307,6 +307,7 @@ export default function HelpSupportScreen() {
                    placeholder="Neem contact met ons op:"
                    placeholderTextColor={colors.textTertiary}
                    placeholderStyle={{ fontWeight: '700' }}
+                   keyboardAppearance={colors.isDark ? 'dark' : 'light'}
                    multiline
                    numberOfLines={9}
                    autoFocus

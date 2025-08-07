@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 
 export default function EditEmailScreen({ navigation }) {
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
 
@@ -59,6 +59,7 @@ export default function EditEmailScreen({ navigation }) {
           onChangeText={setEmail}
           placeholder="Voer je e-mailadres in"
           placeholderTextColor={colors.textSecondary}
+          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
           autoFocus
           keyboardType="email-address"
           autoCapitalize="none"

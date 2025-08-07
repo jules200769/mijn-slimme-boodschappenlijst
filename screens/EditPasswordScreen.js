@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 
 export default function EditPasswordScreen({ navigation }) {
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -74,6 +74,7 @@ export default function EditPasswordScreen({ navigation }) {
           onChangeText={setNewPassword}
           placeholder="Nieuw wachtwoord"
           placeholderTextColor={colors.textSecondary}
+          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
           secureTextEntry
         />
         <Text style={[styles.label, { color: colors.text }]}>Bevestig nieuw wachtwoord</Text>
@@ -87,6 +88,7 @@ export default function EditPasswordScreen({ navigation }) {
           onChangeText={setConfirmPassword}
           placeholder="Bevestig nieuw wachtwoord"
           placeholderTextColor={colors.textSecondary}
+          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
           secureTextEntry
         />
         <TouchableOpacity 

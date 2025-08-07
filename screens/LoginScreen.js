@@ -25,7 +25,7 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, user, autoLoginActive } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [autoLogin, setAutoLogin] = useState(false);
 
   useEffect(() => {
@@ -129,6 +129,7 @@ const LoginScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -148,6 +149,7 @@ const LoginScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,

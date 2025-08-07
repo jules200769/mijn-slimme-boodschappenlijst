@@ -20,7 +20,7 @@ import { supabase } from '../lib/supabase';
 export default function FeedbackScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [rating, setRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -138,6 +138,7 @@ export default function FeedbackScreen() {
               }]}
               placeholder="Deel je ervaringen, suggesties of problemen..."
               placeholderTextColor={colors.textSecondary}
+              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
               value={feedbackText}
               onChangeText={setFeedbackText}
               multiline
