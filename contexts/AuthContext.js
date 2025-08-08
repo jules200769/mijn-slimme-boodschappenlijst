@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, profilePhotos } from '../lib/supabase';
-import { getAutoLoginEnabled, clearAutoLogin } from '../lib/autoLogin';
 
 const AuthContext = createContext();
 
@@ -67,20 +66,21 @@ export const AuthProvider = ({ children }) => {
     // Haal huidige sessie en gebruiker op bij app start
     const getCurrentSession = async () => {
       try {
-        const autoLogin = await getAutoLoginEnabled();
         const { data, error } = await supabase.auth.getSession();
         const session = data?.session;
-        console.log('DEBUG: autoLogin:', autoLogin);
         console.log('DEBUG: Supabase session:', session);
-        if (session && session.user && autoLogin) {
+        console.log('DEBUG: Session error:', error);
+        
+        if (session && session.user) {
+          console.log('DEBUG: Session user found:', session.user.id);
           const enrichedUser = await enrichUserData(session.user);
           setUser(enrichedUser);
           setAutoLoginActive(true);
           console.log('DEBUG: Auto-login actief, user:', enrichedUser);
         } else {
+          console.log('DEBUG: Geen geldige sessie - session:', !!session, 'user:', !!session?.user);
           setUser(null);
           setAutoLoginActive(false);
-          console.log('DEBUG: Geen geldige sessie of auto-login uit');
         }
       } catch (error) {
         setUser(null);
@@ -101,7 +101,8 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(null);
         setAutoLoginActive(false);
-        clearAutoLogin();
+        // Alleen clearAutoLogin bij expliciete signOut, niet bij elke auth state change
+        // clearAutoLogin(); // Verwijderd - automatische inlog voorkeur blijft behouden
       }
       setLoading(false);
     });
@@ -125,10 +126,16 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
+      console.log('DEBUG: Attempting sign in for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      
+      console.log('DEBUG: Sign in successful, session:', data.session);
+      console.log('DEBUG: User data:', data.user);
+      
       return { success: true, data };
     } catch (error) {
+      console.log('DEBUG: Sign in failed:', error);
       return { success: false, error: error.message };
     }
   };

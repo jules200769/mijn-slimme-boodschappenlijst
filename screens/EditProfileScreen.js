@@ -3,14 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Ale
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { supabase, profilePhotos } from '../lib/supabase';
-import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '../lib/supabase';
 
 export default function EditProfileScreen({ navigation }) {
-  const { user, signOut, updateUserContext } = useAuth();
+  const { user, signOut } = useAuth();
   const { colors } = useTheme();
   const [profileImage, setProfileImage] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   // Laad de profielfoto bij het openen van het scherm
   useEffect(() => {
@@ -27,143 +25,7 @@ export default function EditProfileScreen({ navigation }) {
     }
   };
 
-  const requestPermissions = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Toestemming nodig', 'We hebben toegang tot je foto\'s nodig om een profielfoto te kunnen selecteren.');
-      return false;
-    }
-    return true;
-  };
-
-  const requestCameraPermissions = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Toestemming nodig', 'We hebben toegang tot je camera nodig om een foto te kunnen maken.');
-      return false;
-    }
-    return true;
-  };
-
-  const showImagePickerOptions = () => {
-    Alert.alert(
-      'Profielfoto wijzigen',
-      'Kies een optie:',
-      [
-        { text: 'Annuleren', style: 'cancel' },
-        { 
-          text: 'Maak foto', 
-          onPress: () => takePhoto() 
-        },
-        { 
-          text: 'Kies uit galerij', 
-          onPress: () => pickImage() 
-        }
-      ]
-    );
-  };
-
-  const takePhoto = async () => {
-    const hasPermission = await requestCameraPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        await uploadProfileImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het maken van de foto.');
-    }
-  };
-
-  const pickImage = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        await uploadProfileImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het selecteren van de foto.');
-    }
-  };
-
-  const uploadProfileImage = async (imageUri) => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      console.log('Starting profile photo upload for user:', user.id);
-      
-      // Controleer eerst of de storage bucket bestaat
-      const { exists: bucketExists, error: bucketError } = await profilePhotos.checkStorageBucket();
-      if (bucketError) {
-        console.error('Bucket check error:', bucketError);
-      }
-      
-      if (!bucketExists) {
-        Alert.alert('Configuratie Fout', 'De profielfoto storage is niet geconfigureerd. Neem contact op met de ontwikkelaar.');
-        return;
-      }
-      
-      // Upload de foto naar Supabase storage
-      const { data: photoUrl, error: uploadError } = await profilePhotos.uploadProfilePhoto(user.id, imageUri);
-      
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('Photo uploaded, updating metadata...');
-      
-      // Update de user metadata met de nieuwe foto URL
-      const { error: updateError } = await profilePhotos.updateProfilePhotoUrl(photoUrl);
-      
-      if (updateError) {
-        console.error('Metadata update error:', updateError);
-        throw updateError;
-      }
-
-      // Update de lokale state
-      setProfileImage(photoUrl);
-      
-      // Update de user context
-      await updateUserContext();
-      
-      Alert.alert('Succes', 'Je profielfoto is bijgewerkt!');
-    } catch (error) {
-      console.error('Error uploading profile image:', error);
-      
-      let errorMessage = 'Er is een fout opgetreden bij het uploaden van de foto. Probeer het opnieuw.';
-      
-      if (error.message) {
-        if (error.message.includes('storage')) {
-          errorMessage = 'Probleem met foto opslag. Controleer je internetverbinding en probeer het opnieuw.';
-        } else if (error.message.includes('permission')) {
-          errorMessage = 'Geen toestemming om foto\'s te uploaden. Controleer je instellingen.';
-        }
-      }
-      
-      Alert.alert('Fout', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Profielfoto wijzigen is uitgeschakeld
   const handleDeleteAccount = async () => {
     if (!user) return;
     Alert.alert(
@@ -213,10 +75,8 @@ export default function EditProfileScreen({ navigation }) {
         </View>
         {/* Profielcirkel en naam */}
         <View style={[styles.profileHeader, { backgroundColor: colors.background }]}>
-          <TouchableOpacity 
-            onPress={showImagePickerOptions} 
+          <View 
             style={styles.profileImageContainer}
-            disabled={loading}
           >
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.profileImage} />
@@ -227,15 +87,7 @@ export default function EditProfileScreen({ navigation }) {
                 </Text>
               </View>
             )}
-            <View style={[styles.editIconContainer, { backgroundColor: colors.primary }]}>
-              <MaterialCommunityIcons name="camera" size={16} color="white" />
-            </View>
-            {loading && (
-              <View style={[styles.loadingOverlay, { backgroundColor: colors.background + '80' }]}>
-                <MaterialCommunityIcons name="loading" size={20} color={colors.primary} />
-              </View>
-            )}
-          </TouchableOpacity>
+          </View>
           <Text style={[styles.profileName, { color: colors.text }]}>
             {`"${displayName}"`}
           </Text>

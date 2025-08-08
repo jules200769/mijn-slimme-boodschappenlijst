@@ -17,8 +17,6 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
-import { getAutoLoginEnabled, setAutoLoginEnabled } from '../lib/autoLogin';
-import { Switch } from 'react-native';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -26,15 +24,7 @@ const LoginScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const { signIn, user, autoLoginActive } = useAuth();
   const { colors, isDarkMode } = useTheme();
-  const [autoLogin, setAutoLogin] = useState(false);
-
-  useEffect(() => {
-    // Laad voorkeur bij openen scherm
-    (async () => {
-      const enabled = await getAutoLoginEnabled();
-      setAutoLogin(enabled);
-    })();
-  }, []);
+  // Automatische inlog is altijd aan
 
   useEffect(() => {
     // Als user en autoLoginActive, navigeer direct naar hoofdscherm
@@ -55,7 +45,6 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const result = await signIn(email, password);
-      await setAutoLoginEnabled(autoLogin); // Sla voorkeur op
       if (result.success) {
         // Login succesvol - de AuthContext zal automatisch de user state updaten
         // De app zal automatisch naar de main navigator switchen
@@ -161,16 +150,7 @@ const LoginScreen = ({ navigation }) => {
                 } 
               }}
             />
-            {/* Automatisch inloggen switch */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
-              <Switch
-                value={autoLogin}
-                onValueChange={setAutoLogin}
-                trackColor={{ true: colors.switchActive, false: colors.switchTrack }}
-                thumbColor={autoLogin ? colors.switchActive : colors.switchThumb}
-              />
-              <Text style={{ marginLeft: 12, fontSize: 16, color: colors.text }}>Automatisch inloggen</Text>
-            </View>
+            {/* Automatische inlog is altijd ingeschakeld */}
 
             <Button
               mode="contained"
