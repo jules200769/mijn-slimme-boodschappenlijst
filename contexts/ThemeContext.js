@@ -65,8 +65,9 @@ export const ThemeProvider = ({ children }) => {
       primaryLight: isDarkMode ? '#e8f5e8' : '#e8f5e8',
       
       // Borders en dividers
-      border: isDarkMode ? '#333333' : '#f0f0f0',
-      divider: isDarkMode ? '#333333' : '#f0f0f0',
+      // In dark mode gelijk aan 'surface' gezet zodat dunne lijnen niet opvallen
+      border: isDarkMode ? '#1e1e1e' : '#f0f0f0',
+      divider: isDarkMode ? '#1e1e1e' : '#f0f0f0',
       
       // Status kleuren
       success: isDarkMode ? '#37af29' : '#37af29',

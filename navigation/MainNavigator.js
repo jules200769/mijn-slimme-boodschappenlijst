@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -61,13 +62,15 @@ export default function MainNavigator() {
         tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.divider,
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
+          backgroundColor: colors.background,
+          borderTopWidth: 0,
+          paddingBottom: 12,
+          paddingTop: 6,
+          height: 68,
         },
+        tabBarBackground: () => (
+          <View style={{ flex: 1, backgroundColor: colors.background }} />
+        ),
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
@@ -87,6 +90,7 @@ export default function MainNavigator() {
         component={SettingsStack}
         options={{
           title: 'Instellingen',
+          tabBarItemStyle: { paddingLeft: 6 },
         }}
       />
       {/* About tab verwijderd */}

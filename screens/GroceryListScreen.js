@@ -1792,9 +1792,6 @@ export default function GroceryListScreen() {
             {productOpslaanFout && (
               <Text style={{ color: colors.error, marginBottom: 8 }}>{productOpslaanFout}</Text>
             )}
-            {productOpslaanLoading && (
-              <Text style={{ color: colors.primary, marginBottom: 8 }}>Even geduld...</Text>
-            )}
             {bewerkProduct && (
               <>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
@@ -1872,8 +1869,8 @@ export default function GroceryListScreen() {
                     <Text style={{ fontWeight: 'bold', fontSize: 16, color: colors.text }}>{bewerkProduct.prijs && bewerkProduct.hoeveelheid ? `€ ${(parseFloat(bewerkProduct.prijs) * parseFloat(bewerkProduct.hoeveelheid)).toFixed(2)}` : '€ 0,00'}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={{ backgroundColor: colors.primaryLight, borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 8 }} onPress={handleProductDetailsOpslaan}>
-                  <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 18 }}>Volgende</Text>
+                <TouchableOpacity style={{ backgroundColor: colors.success, borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 8 }} onPress={handleProductDetailsOpslaan}>
+                  <Text style={{ color: colors.buttonText, fontWeight: 'bold', fontSize: 18 }}>Opslaan</Text>
                   </TouchableOpacity>
                 </>
               )}

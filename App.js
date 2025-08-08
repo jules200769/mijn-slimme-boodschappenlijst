@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme as NavigationDefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -13,7 +13,7 @@ import notificationTriggers from './lib/notificationTriggers';
 
 function AppContent() {
   const { user, loading } = useAuth();
-  const { colors, isLoading: themeLoading } = useTheme();
+  const { colors, isLoading: themeLoading, isDarkMode } = useTheme();
 
   useEffect(() => {
     // Initialize notification service
@@ -64,10 +64,27 @@ function AppContent() {
     );
   }
 
+  // Stel een navigation theme in dat aansluit op ons ThemeContext,
+  // met name: background en card gelijk aan surface voor consistente donkere onderbalk
+  const baseNavTheme = isDarkMode ? NavigationDarkTheme : NavigationDefaultTheme;
+  const navTheme = {
+    ...baseNavTheme,
+    dark: isDarkMode,
+    colors: {
+      ...baseNavTheme.colors,
+      primary: colors.success,
+      background: colors.surface,
+      card: colors.surface,
+      text: colors.text,
+      border: colors.divider,
+      notification: colors.success,
+    },
+  };
+
   return (
     <SafeAreaProvider>
       <PaperProvider>
-        <NavigationContainer>
+        <NavigationContainer theme={navTheme}>
           <StatusBar style="auto" />
           {user ? <MainNavigator /> : <AuthNavigator />}
         </NavigationContainer>
