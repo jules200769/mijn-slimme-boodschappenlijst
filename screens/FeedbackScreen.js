@@ -138,7 +138,7 @@ export default function FeedbackScreen() {
               }]}
               placeholder="Deel je ervaringen, suggesties of problemen..."
               placeholderTextColor={colors.textSecondary}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               value={feedbackText}
               onChangeText={setFeedbackText}
               multiline

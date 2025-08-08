@@ -118,7 +118,7 @@ const LoginScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -138,7 +138,7 @@ const LoginScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,

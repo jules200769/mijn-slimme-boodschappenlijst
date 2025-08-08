@@ -74,7 +74,7 @@ export default function EditPasswordScreen({ navigation }) {
           onChangeText={setNewPassword}
           placeholder="Nieuw wachtwoord"
           placeholderTextColor={colors.textSecondary}
-          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+          keyboardAppearance={isDarkMode ? 'dark' : 'light'}
           secureTextEntry
         />
         <Text style={[styles.label, { color: colors.text }]}>Bevestig nieuw wachtwoord</Text>
@@ -88,7 +88,7 @@ export default function EditPasswordScreen({ navigation }) {
           onChangeText={setConfirmPassword}
           placeholder="Bevestig nieuw wachtwoord"
           placeholderTextColor={colors.textSecondary}
-          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+          keyboardAppearance={isDarkMode ? 'dark' : 'light'}
           secureTextEntry
         />
         <TouchableOpacity 

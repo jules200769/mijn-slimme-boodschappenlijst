@@ -307,7 +307,7 @@ export default function HelpSupportScreen() {
                    placeholder="Neem contact met ons op:"
                    placeholderTextColor={colors.textTertiary}
                    placeholderStyle={{ fontWeight: '700' }}
-                   keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+                    keyboardAppearance={isDarkMode ? 'dark' : 'light'}
                    multiline
                    numberOfLines={9}
                    autoFocus

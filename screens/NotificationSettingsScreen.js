@@ -20,7 +20,6 @@ export default function NotificationSettingsScreen() {
     listShared: true,
     weeklyReminders: false,
     inactivityReminders: true,
-    testNotifications: false,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -108,7 +107,6 @@ export default function NotificationSettingsScreen() {
         listShared: false,
         weeklyReminders: false,
         inactivityReminders: false,
-        testNotifications: false,
       };
       
       await saveNotificationSettings(newSettings);
@@ -131,7 +129,6 @@ export default function NotificationSettingsScreen() {
           listShared: true,
           weeklyReminders: true,
           inactivityReminders: true,
-          testNotifications: false,
         };
         
         await saveNotificationSettings(newSettings);
@@ -164,93 +161,12 @@ export default function NotificationSettingsScreen() {
     const newSettings = { ...settings, [key]: !settings[key] };
     await saveNotificationSettings(newSettings);
     
-    // Test the specific notification type if it was enabled
-    if (newSettings[key]) {
-      await testSpecificNotification(key);
-    }
+    // Geen automatische test meer
     
     console.log(`Toggled ${key} to: ${newSettings[key]}`);
   };
 
-  // Test specific notification type
-  const testSpecificNotification = async (notificationType) => {
-    try {
-      switch (notificationType) {
-        case 'itemAdded':
-          await notificationTriggers.triggerItemAddedNotification('Test Item', 'Test Lijst', 'Test Gebruiker');
-          break;
-        case 'listShared':
-          await notificationTriggers.triggerListSharedNotification('Test Lijst', 'Test Gebruiker', 'TEST123');
-          break;
-        case 'shoppingReminders':
-          await notificationTriggers.triggerShoppingReminderNotification('Test Lijst', 5);
-          break;
-        case 'inactivityReminders':
-          // Alleen plannen, niet direct triggeren
-          await notificationTriggers.scheduleInactivityCheck();
-          Alert.alert('Inactiviteit Check', 'Inactiviteit check is ingepland voor dagelijks om 10:00!');
-          break;
-        case 'weeklyReminders':
-          // Alleen plannen, niet direct triggeren
-          await notificationTriggers.scheduleWeeklyReminder();
-          Alert.alert('Wekelijkse Herinnering', 'Wekelijkse herinnering is ingepland voor elke maandag om 9:00!');
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.error('Error testing notification:', error);
-    }
-  };
-
-  // Send test notification
-  const sendTestNotification = async () => {
-    if (!isEnabled || !hasPermissions) {
-      Alert.alert(
-        'Notificaties Uitgeschakeld',
-        'Schakel eerst notificaties in om een test te versturen.'
-      );
-      return;
-    }
-
-    try {
-      await notificationService.sendTestNotification();
-      Alert.alert(
-        'Test Notificatie',
-        'Er is een test notificatie verstuurd!'
-      );
-    } catch (error) {
-      Alert.alert(
-        'Fout',
-        'Er is een fout opgetreden bij het versturen van de test notificatie.'
-      );
-    }
-  };
-
-  // Send inactivity test notification
-  const sendInactivityTestNotification = async () => {
-    if (!isEnabled || !hasPermissions) {
-      Alert.alert(
-        'Notificaties Uitgeschakeld',
-        'Schakel eerst notificaties in om een test te versturen.'
-      );
-      return;
-    }
-
-    try {
-      // Alleen plannen, niet direct triggeren
-      await notificationTriggers.scheduleInactivityCheck();
-      Alert.alert(
-        'Inactiviteit Check Gepland',
-        'Inactiviteit check is ingepland voor dagelijks om 10:00!'
-      );
-    } catch (error) {
-      Alert.alert(
-        'Fout',
-        'Er is een fout opgetreden bij het inplannen van de inactiviteit check.'
-      );
-    }
-  };
+  // Verwijderd: test notificatie functies en UI
 
   // Open system settings
   const openSystemSettings = () => {
@@ -445,26 +361,7 @@ export default function NotificationSettingsScreen() {
               </View>
             </View>
 
-            {/* Test Section */}
-            <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Test</Text>
-              
-              <TouchableOpacity 
-                style={[styles.testButton, { backgroundColor: colors.primary }]} 
-                onPress={sendTestNotification}
-              >
-                <MaterialCommunityIcons name="bell-ring" size={20} color="white" />
-                <Text style={styles.testButtonText}>Test Notificatie Versturen</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.testButton, { backgroundColor: colors.error, marginTop: 8 }]} 
-                onPress={sendInactivityTestNotification}
-              >
-                <MaterialCommunityIcons name="clock-outline" size={20} color="white" />
-                <Text style={styles.testButtonText}>Test Inactiviteit Notificatie</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Testsectie verwijderd */}
           </>
         )}
       </ScrollView>
@@ -540,21 +437,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  testButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
   },
   disabledMessage: {
     marginTop: 8,

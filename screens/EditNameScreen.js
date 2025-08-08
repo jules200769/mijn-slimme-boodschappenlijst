@@ -146,7 +146,7 @@ export default function EditNameScreen({ navigation }) {
           onChangeText={setName}
           placeholder="Voer je naam in"
           placeholderTextColor={colors.textSecondary}
-          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+          keyboardAppearance={isDarkMode ? 'dark' : 'light'}
           autoFocus
         />
         <TouchableOpacity 

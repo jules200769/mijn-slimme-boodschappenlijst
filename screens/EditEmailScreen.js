@@ -59,7 +59,7 @@ export default function EditEmailScreen({ navigation }) {
           onChangeText={setEmail}
           placeholder="Voer je e-mailadres in"
           placeholderTextColor={colors.textSecondary}
-          keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+          keyboardAppearance={isDarkMode ? 'dark' : 'light'}
           autoFocus
           keyboardType="email-address"
           autoCapitalize="none"

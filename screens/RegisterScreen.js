@@ -86,7 +86,7 @@ const RegisterScreen = ({ navigation }) => {
               onChangeText={setName}
               mode="outlined"
               style={styles.input}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -107,7 +107,7 @@ const RegisterScreen = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -127,7 +127,7 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
@@ -147,7 +147,7 @@ const RegisterScreen = ({ navigation }) => {
               mode="outlined"
               secureTextEntry
               style={styles.input}
-              keyboardAppearance={colors.isDark ? 'dark' : 'light'}
+              keyboardAppearance={isDarkMode ? 'dark' : 'light'}
               theme={{ 
                 colors: { 
                   primary: colors.primary,
