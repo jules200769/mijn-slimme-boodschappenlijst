@@ -52,4 +52,4 @@ Het logo bestaat uit:
 - **Format**: PNG
 - **Quality**: 100%
 - **Background**: Transparent voor icon
-- **Anti-aliasing**: Enabled 
+- **Anti-aliasing**: Enabled
