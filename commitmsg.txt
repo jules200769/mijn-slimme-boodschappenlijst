@@ -1,0 +1,1 @@
+Share: sticky share button under list; native Share sheet; fallback modal; backend helpers

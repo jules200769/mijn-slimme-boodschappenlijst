@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, TextInput, FlatList, Alert, KeyboardAvoidingView, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, TextInput, FlatList, Alert, KeyboardAvoidingView, Platform, Animated, Share } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { lists, supabase } from '../lib/supabase';
+import { lists, supabase, sharedLists } from '../lib/supabase';
 import notificationTriggers from '../lib/notificationTriggers';
 
 // HighlightedText component aanpassen
@@ -451,6 +451,41 @@ export default function GroceryListScreen() {
     setLijsten(lijsten.map(l => l.id === geselecteerdeLijst.id ? nieuweLijst : l));
     setGeselecteerdeLijst(nieuweLijst);
     setToonNieuwMenuModal(false);
+  };
+
+  // Deel-functionaliteit
+  const [toonDeelModal, setToonDeelModal] = useState(false);
+  const [deelCode, setDeelCode] = useState('');
+
+  const handleDeelLijst = async () => {
+    try {
+      if (!geselecteerdeLijst) return;
+      if (!geselecteerdeLijst.items || geselecteerdeLijst.items.length === 0) {
+        Alert.alert('Deel lijst', 'Voeg eerst producten toe voordat je de lijst deelt.');
+        return;
+      }
+      const { user } = useAuth();
+      const { data, error } = await sharedLists.createSharedList(user.id, {
+        name: geselecteerdeLijst.naam || geselecteerdeLijst.name,
+        items: geselecteerdeLijst.items,
+      });
+      if (error) throw error;
+      const code = data.code;
+      setDeelCode(code);
+
+      const shareMessage = `Deelcode voor boodschappenlijst "${geselecteerdeLijst.naam || geselecteerdeLijst.name}": ${code}\n\nOpen de app en voeg je bij deze lijst met de code.`;
+      try {
+        await Share.share({
+          message: shareMessage,
+        });
+      } catch (shareErr) {
+        // Als natieve share niet gebruikt wordt, val terug op onze eigen modal
+        setToonDeelModal(true);
+      }
+    } catch (err) {
+      console.error('Fout bij delen:', err);
+      Alert.alert('Fout', 'Kon de lijst niet delen. Probeer opnieuw.');
+    }
   };
 
 
@@ -1334,21 +1369,41 @@ export default function GroceryListScreen() {
               </View>
             )}
             {geselecteerdeLijst.items.length > 0 && (
-              <TouchableOpacity 
-                style={[styles.floatingAddButton, { backgroundColor: colors.primary }]} 
-                onPress={() => {
-                  setToonProductModal(true);
-                  setGekozenCategorie(null);
-                  setProductZoek('');
-                  setToonZoekResultaten(false);
-                  setToonDuplicaatModal(false); // Reset duplicaat modal
-                  handleBulkSelectieReset(); // Reset bulk selectie
+              <>
+                <TouchableOpacity 
+                  style={[styles.floatingAddButton, { backgroundColor: colors.primary }]} 
+                  onPress={() => {
+                    setToonProductModal(true);
+                    setGekozenCategorie(null);
+                    setProductZoek('');
+                    setToonZoekResultaten(false);
+                    setToonDuplicaatModal(false); // Reset duplicaat modal
+                    handleBulkSelectieReset(); // Reset bulk selectie
+                  }}
+                >
+                  <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                  <Text style={[styles.addButtonText, { color: colors.buttonText }]}>TOEVOEGEN</Text>
+                </TouchableOpacity>
+                {/* Deeln-knop wordt nu als floating button onderaan getoond */}
+              </>
+            )}
+            {/* Prominente sticky deelknop onderaan */}
+            <View style={{ position: 'absolute', left: 16, right: 16, bottom: 16, zIndex: 20 }}>
+              <TouchableOpacity
+                onPress={handleDeelLijst}
+                style={{
+                  backgroundColor: colors.primary,
+                  borderRadius: 24,
+                  paddingVertical: 14,
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  justifyContent: 'center'
                 }}
               >
-                <MaterialCommunityIcons name="plus" size={24} color="#fff" />
-                <Text style={[styles.addButtonText, { color: colors.buttonText }]}>TOEVOEGEN</Text>
+                <MaterialCommunityIcons name="share-variant" size={22} color={colors.buttonText} style={{ marginRight: 8 }} />
+                <Text style={{ color: colors.buttonText, fontWeight: 'bold', fontSize: 16 }}>Lijst delen</Text>
               </TouchableOpacity>
-            )}
+            </View>
           </SafeAreaView>
         )}
         {/* --- MODALS ALTIJD HIERONDER --- */}
@@ -2175,6 +2230,33 @@ export default function GroceryListScreen() {
       )}
 
 
+      {/* Deelcode modal */}
+      <Modal
+        visible={toonDeelModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setToonDeelModal(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setToonDeelModal(false)}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <View style={{ backgroundColor: colors.surface, padding: 20, borderRadius: 12, width: '80%' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 8 }}>Lijst delen</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>
+              Deel deze code met anderen om deze lijst te delen:
+            </Text>
+            <View style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.divider, alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 22, letterSpacing: 2, fontWeight: 'bold', color: colors.text }}>{deelCode}</Text>
+            </View>
+            <TouchableOpacity onPress={() => setToonDeelModal(false)} style={{ alignSelf: 'flex-end' }}>
+              <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Sluiten</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {selectMode && selectedListIds.length > 0 && (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 24, alignItems: 'center', zIndex: 10 }}>
           <TouchableOpacity
@@ -2324,6 +2406,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  shareButtonText: {
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
