@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, profilePhotos } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [autoLoginActive, setAutoLoginActive] = useState(false);
+  const isInitializingRef = useRef(true);
 
   // Functie om user data uit te breiden met profielfoto
   const enrichUserData = async (userData) => {
@@ -66,6 +67,7 @@ export const AuthProvider = ({ children }) => {
     // Haal huidige sessie en gebruiker op bij app start
     const getCurrentSession = async () => {
       try {
+        isInitializingRef.current = true;
         const { data, error } = await supabase.auth.getSession();
         const session = data?.session;
         console.log('DEBUG: Supabase session:', session);
@@ -106,6 +108,7 @@ export const AuthProvider = ({ children }) => {
         console.log('DEBUG: Fout bij ophalen sessie:', error);
       } finally {
         setLoading(false);
+        isInitializingRef.current = false;
       }
     };
 
@@ -113,7 +116,32 @@ export const AuthProvider = ({ children }) => {
 
     // Luister naar auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (isInitializingRef.current) {
+        // Negeer events tijdens initiële validatie om race conditions te voorkomen
+        return;
+      }
+      
       if (session?.user) {
+        // Valideer opnieuw dat de user echt bestaat
+        try {
+          const { data: currentUserData, error: getUserError } = await supabase.auth.getUser();
+          if (getUserError || !currentUserData?.user) {
+            console.log('DEBUG: onAuthStateChange -> user ongeldig, uitloggen');
+            await supabase.auth.signOut();
+            setUser(null);
+            setAutoLoginActive(false);
+            setLoading(false);
+            return;
+          }
+        } catch (validationError) {
+          console.log('DEBUG: onAuthStateChange validatie fout, uitloggen als voorzorg:', validationError);
+          await supabase.auth.signOut();
+          setUser(null);
+          setAutoLoginActive(false);
+          setLoading(false);
+          return;
+        }
+
         const enrichedUser = await enrichUserData(session.user);
         setUser(enrichedUser);
       } else {
