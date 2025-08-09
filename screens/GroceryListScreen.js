@@ -453,35 +453,75 @@ export default function GroceryListScreen() {
     setToonNieuwMenuModal(false);
   };
 
-  // Deel-functionaliteit
+  // Deel-functionaliteit (native share waar mogelijk, anders fallback)
   const [toonDeelModal, setToonDeelModal] = useState(false);
   const [deelCode, setDeelCode] = useState('');
+
+  const buildShareText = () => {
+    const titel = `${geselecteerdeLijst?.naam || geselecteerdeLijst?.name || 'Boodschappenlijst'}`;
+    const regels = (geselecteerdeLijst?.items || []).map((item) => {
+      const naam = item.naam || item.name || 'Item';
+      const qty = item.aantal || item.quantity || item.qty || item.stuks || 1;
+      return `• ${naam} (${qty})`;
+    });
+    return `Mijn ${titel}\n\n${regels.join('\n')}`;
+  };
 
   const handleDeelLijst = async () => {
     try {
       if (!geselecteerdeLijst) return;
       if (!geselecteerdeLijst.items || geselecteerdeLijst.items.length === 0) {
-        Alert.alert('Deel lijst', 'Voeg eerst producten toe voordat je de lijst deelt.');
+        Alert.alert('Delen', 'Voeg eerst producten toe voordat je de lijst deelt.');
         return;
       }
-      const { user } = useAuth();
-      const { data, error } = await sharedLists.createSharedList(user.id, {
-        name: geselecteerdeLijst.naam || geselecteerdeLijst.name,
-        items: geselecteerdeLijst.items,
-      });
-      if (error) throw error;
-      const code = data.code;
-      setDeelCode(code);
 
-      const shareMessage = `Deelcode voor boodschappenlijst "${geselecteerdeLijst.naam || geselecteerdeLijst.name}": ${code}\n\nOpen de app en voeg je bij deze lijst met de code.`;
+      // Probeer een deelcode aan te maken; faalt dit, ga dan toch door met tekst-delen
+      let code = '';
       try {
-        await Share.share({
-          message: shareMessage,
+        const { data: shareData, error: shareErr } = await sharedLists.createSharedList(user?.id, {
+          name: geselecteerdeLijst.naam || geselecteerdeLijst.name,
+          items: geselecteerdeLijst.items,
         });
-      } catch (shareErr) {
-        // Als natieve share niet gebruikt wordt, val terug op onze eigen modal
-        setToonDeelModal(true);
+        if (!shareErr && shareData?.code) {
+          code = shareData.code;
+        }
+      } catch (e) {
+        // stille fallback; we delen alsnog de tekst zonder code
       }
+
+      const message = buildShareText();
+
+      // Web: gebruik de Web Share API indien beschikbaar
+      // @ts-ignore - navigator kan op native ontbreken
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.share) {
+        try {
+          // @ts-ignore
+          await navigator.share({ title: 'Boodschappenlijst', text: message, url: code ? webLink : undefined });
+          return;
+        } catch (_) { /* fallback hieronder */ }
+      }
+
+      // Native (iOS/Android): gebruik React Native Share API
+      try {
+        // Belangrijk: op iOS wordt 'message' gebruikt; 'url' kan content wegdrukken.
+        await Share.share({ message });
+        return;
+      } catch (_) { /* fallback hieronder */ }
+
+      // Fallback: kopieer naar klembord (web) of toon modal met tekst
+      // @ts-ignore
+      if (Platform.OS === 'web' && navigator?.clipboard?.writeText) {
+        try {
+          // @ts-ignore
+          await navigator.clipboard.writeText(message);
+          Alert.alert('Gekopieerd', 'De lijst is gekopieerd naar het klembord.');
+          return;
+        } catch (_) { /* ga door naar modal */ }
+      }
+
+      // Als alles faalt, toon eenvoudig een modal met deelbare tekst
+      setDeelCode(message);
+      setToonDeelModal(true);
     } catch (err) {
       console.error('Fout bij delen:', err);
       Alert.alert('Fout', 'Kon de lijst niet delen. Probeer opnieuw.');
@@ -1369,7 +1409,7 @@ export default function GroceryListScreen() {
               </View>
             )}
             {geselecteerdeLijst.items.length > 0 && (
-              <>
+              <View style={{ position: 'absolute', right: 24, bottom: 24 }}>
                 <TouchableOpacity 
                   style={[styles.floatingAddButton, { backgroundColor: colors.primary }]} 
                   onPress={() => {
@@ -1377,18 +1417,17 @@ export default function GroceryListScreen() {
                     setGekozenCategorie(null);
                     setProductZoek('');
                     setToonZoekResultaten(false);
-                    setToonDuplicaatModal(false); // Reset duplicaat modal
-                    handleBulkSelectieReset(); // Reset bulk selectie
+                    setToonDuplicaatModal(false);
+                    handleBulkSelectieReset();
                   }}
                 >
                   <MaterialCommunityIcons name="plus" size={24} color="#fff" />
                   <Text style={[styles.addButtonText, { color: colors.buttonText }]}>TOEVOEGEN</Text>
                 </TouchableOpacity>
-                {/* Deeln-knop wordt nu als floating button onderaan getoond */}
-              </>
+              </View>
             )}
             {/* Prominente sticky deelknop onderaan */}
-            <View style={{ position: 'absolute', left: 16, right: 16, bottom: 16, zIndex: 20 }}>
+            <View style={{ position: 'absolute', left: 16, right: 16, bottom: 80, zIndex: 20 }}>
               <TouchableOpacity
                 onPress={handleDeelLijst}
                 style={{
@@ -2225,6 +2264,10 @@ export default function GroceryListScreen() {
               <MaterialCommunityIcons name="check-all" size={20} color={colors.textSecondary} style={{ marginRight: 12 }} />
               <Text style={{ fontSize: 15, color: colors.text }}>Check all items</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={{ paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }} onPress={handleDeelLijst}>
+              <MaterialCommunityIcons name="share-variant" size={20} color={colors.primary} style={{ marginRight: 12 }} />
+              <Text style={{ fontSize: 15, color: colors.primary, fontWeight: 'bold' }}>Lijst delen</Text>
+            </TouchableOpacity>
           </Animated.View>
         </TouchableOpacity>
       )}
@@ -2242,17 +2285,19 @@ export default function GroceryListScreen() {
           onPress={() => setToonDeelModal(false)}
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}
         >
-          <View style={{ backgroundColor: colors.surface, padding: 20, borderRadius: 12, width: '80%' }}>
+          <View style={{ backgroundColor: colors.surface, padding: 20, borderRadius: 12, width: '90%' }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 8 }}>Lijst delen</Text>
             <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>
-              Deel deze code met anderen om deze lijst te delen:
+              Kopieer en deel de lijst via je favoriete app:
             </Text>
-            <View style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.divider, alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 22, letterSpacing: 2, fontWeight: 'bold', color: colors.text }}>{deelCode}</Text>
+            <View style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.divider, marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, color: colors.text }}>{deelCode}</Text>
             </View>
-            <TouchableOpacity onPress={() => setToonDeelModal(false)} style={{ alignSelf: 'flex-end' }}>
-              <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Sluiten</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <TouchableOpacity onPress={() => setToonDeelModal(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+                <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Sluiten</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -2392,6 +2437,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
   },
+  // styles for temporary actions bar were removed since we now use menu option + single floating add button
   floatingAddButton: {
     position: 'absolute',
     right: 24,

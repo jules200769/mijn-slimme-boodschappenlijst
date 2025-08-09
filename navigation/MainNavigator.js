@@ -1,9 +1,11 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import * as Linking from 'expo-linking';
+import { createStackNavigator } from '@react-navigation/stack';
 
 import GroceryListScreen from '../screens/GroceryListScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -15,7 +17,7 @@ import FeedbackScreen from '../screens/FeedbackScreen';
 import AboutScreen from '../screens/AboutScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import HelpSupportScreen from '../screens/HelpSupportScreen';
-import { createStackNavigator } from '@react-navigation/stack';
+const RootStack = createStackNavigator();
 
 const Tab = createBottomTabNavigator();
 const SettingsStackNav = createStackNavigator();
@@ -36,10 +38,8 @@ function SettingsStack() {
   );
 }
 
-export default function MainNavigator() {
-  const { signOut } = useAuth();
+function Tabs() {
   const { colors } = useTheme();
-
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -80,20 +80,38 @@ export default function MainNavigator() {
       <Tab.Screen 
         name="Groceries" 
         component={GroceryListScreen}
-        options={{
-          title: 'Lijsten',
-        }}
+        options={{ title: 'Lijsten' }}
       />
-      {/* NutritionFactsScreen tab verwijderd */}
       <Tab.Screen 
         name="Settings" 
         component={SettingsStack}
-        options={{
-          title: 'Instellingen',
-          tabBarItemStyle: { paddingLeft: 6 },
-        }}
+        options={{ title: 'Instellingen', tabBarItemStyle: { paddingLeft: 6 } }}
       />
-      {/* About tab verwijderd */}
     </Tab.Navigator>
+  );
+}
+
+function JoinHandlerScreen({ route, navigation }) {
+  const code = route.params?.code;
+  useEffect(() => {
+    // TODO: Use code to join shared list, then go to groceries
+    navigation.replace('Groceries');
+  }, [code]);
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Bezig met openen…</Text>
+    </View>
+  );
+}
+
+export default function MainNavigator() {
+  const { signOut } = useAuth();
+  const { colors } = useTheme();
+
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="Tabs" component={Tabs} />
+      <RootStack.Screen name="Join" component={JoinHandlerScreen} />
+    </RootStack.Navigator>
   );
 } 
