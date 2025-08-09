@@ -72,6 +72,24 @@ export const AuthProvider = ({ children }) => {
         console.log('DEBUG: Session error:', error);
         
         if (session && session.user) {
+          // Validatie: check of de gebruiker server-side nog bestaat
+          try {
+            const { data: currentUserData, error: getUserError } = await supabase.auth.getUser();
+            if (getUserError || !currentUserData?.user) {
+              console.log('DEBUG: Ongeldige of verwijderde sessie gedetecteerd. Uitloggen...');
+              await supabase.auth.signOut();
+              setUser(null);
+              setAutoLoginActive(false);
+              return;
+            }
+          } catch (validationError) {
+            console.log('DEBUG: Fout bij valideren van sessie, uitloggen als voorzorg:', validationError);
+            await supabase.auth.signOut();
+            setUser(null);
+            setAutoLoginActive(false);
+            return;
+          }
+
           console.log('DEBUG: Session user found:', session.user.id);
           const enrichedUser = await enrichUserData(session.user);
           setUser(enrichedUser);
