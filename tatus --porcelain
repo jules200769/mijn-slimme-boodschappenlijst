@@ -1,0 +1,5 @@
+[33ma7ad191[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix bonus data import issues and database constraints
+[33maa78263[m Automatische bonus import en verwijderen handmatige knop
+[33madadeae[m Add bonus functionality with improved matching and UI enhancements - Added context-aware bonus matching to prevent false matches (pindakaas/kaas, winegums/wijn) - Enhanced BonusBadge component with orange color, better positioning and hitbox - Added bonus badges to product selection screen (+ toevoegen) - Added CustomAlert component for beautiful success messages - Improved bonus data update functionality for future weekly updates - Removed debug logging to clean up terminal output
+[33m52009ef[m Share UX: menu item + reliable text-only share; remove links; improve fallbacks
+[33me1bafac[m chore: repo cleanup (remove DEBUG_SHARING.md)
