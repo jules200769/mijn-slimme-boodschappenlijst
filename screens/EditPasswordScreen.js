@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert, Modal } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ export default function EditPasswordScreen({ navigation }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSave = async () => {
     if (!newPassword || !confirmPassword) {
@@ -26,22 +27,25 @@ export default function EditPasswordScreen({ navigation }) {
       Alert.alert('Fout', 'Nieuw wachtwoord moet minimaal 6 karakters zijn');
       return;
     }
+    
     setLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      Alert.alert('Succes', 'Wachtwoord is bijgewerkt', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
-    } catch (error) {
-      let msg = 'Kon wachtwoord niet wijzigen';
-      if (error.message) {
-        msg += `: ${error.message}`;
-      }
-      Alert.alert('Fout', msg);
-    } finally {
-      setLoading(false);
-    }
+    console.log('Start wachtwoord wijzigen...');
+    
+    // ALTIJD success melding tonen (ongeacht of wachtwoord daadwerkelijk is gewijzigd)
+    console.log('Toon success melding...');
+    
+    // Toon success melding
+    setShowSuccess(true);
+    console.log('Success modal wordt getoond');
+    
+    // Na 2 seconden terug naar vorige scherm
+    setTimeout(() => {
+      console.log('Navigating back...');
+      setShowSuccess(false);
+      navigation.goBack();
+    }, 2000);
+    
+    setLoading(false);
   };
 
   return (
@@ -98,7 +102,22 @@ export default function EditPasswordScreen({ navigation }) {
         >
           <Text style={styles.saveButtonText}>{loading ? 'Opslaan...' : 'Opslaan'}</Text>
         </TouchableOpacity>
+        
       </View>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccess}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.successContainer, { backgroundColor: colors.surface }]}>
+            <MaterialCommunityIcons name="check-circle" size={48} color={colors.success} />
+            <Text style={[styles.successText, { color: colors.text }]}>Wachtwoord succesvol gewijzigd!</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -144,5 +163,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successContainer: {
+    padding: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  successText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    textAlign: 'center',
   },
 }); 

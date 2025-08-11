@@ -17,7 +17,6 @@ import FeedbackScreen from '../screens/FeedbackScreen';
 import AboutScreen from '../screens/AboutScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import HelpSupportScreen from '../screens/HelpSupportScreen';
-
 const RootStack = createStackNavigator();
 
 const Tab = createBottomTabNavigator();
@@ -35,7 +34,6 @@ function SettingsStack() {
       <SettingsStackNav.Screen name="About" component={AboutScreen} />
       <SettingsStackNav.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <SettingsStackNav.Screen name="HelpSupport" component={HelpSupportScreen} />
-
     </SettingsStackNav.Navigator>
   );
 }

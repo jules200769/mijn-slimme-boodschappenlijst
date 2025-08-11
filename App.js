@@ -12,7 +12,7 @@ import notificationService from './lib/notifications';
 import notificationTriggers from './lib/notificationTriggers';
 
 function AppContent() {
-  const { user, loading, clearAuthData } = useAuth();
+  const { user, loading } = useAuth();
   const { colors, isLoading: themeLoading, isDarkMode } = useTheme();
 
   useEffect(() => {
@@ -34,10 +34,6 @@ function AppContent() {
         }
       } catch (error) {
         console.error('Error initializing notifications:', error);
-        // Als er een auth error is, schoon de auth data op
-        if (error.message && (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))) {
-          await clearAuthData();
-        }
       }
     };
 
@@ -47,7 +43,7 @@ function AppContent() {
     return () => {
       notificationService.cleanup();
     };
-  }, [user, clearAuthData]);
+  }, [user]);
 
   if (loading || themeLoading) {
     return (

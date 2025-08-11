@@ -22,7 +22,7 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user, autoLoginActive, clearAuthData } = useAuth();
+  const { signIn, user, autoLoginActive } = useAuth();
   const { colors, isDarkMode } = useTheme();
   // Automatische inlog is altijd aan
 
@@ -34,17 +34,7 @@ const LoginScreen = ({ navigation }) => {
         routes: [{ name: 'Groceries' }],
       });
     }
-  }, [user, autoLoginActive, navigation]);
-
-  // Functie om auth data op te schonen bij refresh token errors
-  const handleAuthError = async () => {
-    try {
-      await clearAuthData();
-      Alert.alert('Sessie verlopen', 'Je sessie is verlopen. Log opnieuw in.');
-    } catch (error) {
-      console.log('Error clearing auth data:', error);
-    }
-  };
+  }, [user, autoLoginActive]);
 
   const handleLogin = async () => {
     if (!email || !password) {

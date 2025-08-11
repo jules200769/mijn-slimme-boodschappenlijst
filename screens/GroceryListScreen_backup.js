@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { lists, supabase, sharedLists } from '../lib/supabase';
 import notificationTriggers from '../lib/notificationTriggers';
 
+
 // HighlightedText component aanpassen
 const HighlightedText = ({ text, highlight, style, showHighlight = true, colors }) => {
   if (!showHighlight || !highlight) {
@@ -193,11 +194,17 @@ export default function GroceryListScreen() {
   const [nieuweLijstNaam, setNieuweLijstNaam] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedListIds, setSelectedListIds] = useState([]);
+  const [[], () => {}] = useState([]);
+  const [null, () => {}] = useState(null);
+  const [false, () => {}] = useState(false);
+  
+
 
     // Laad lijsten bij app start en wanneer gebruiker verandert
   useEffect(() => {
     if (user) {
       loadLijsten();
+      ;
       setupRealtimeSubscriptions();
       
       // Track user activity when screen loads
@@ -205,6 +212,7 @@ export default function GroceryListScreen() {
     } else {
       setLijsten([]);
       setGeselecteerdeLijst(null);
+      () => {}([]);
     }
 
     // Cleanup subscriptions when component unmounts or user changes
@@ -235,8 +243,25 @@ export default function GroceryListScreen() {
       )
       .subscribe();
 
+    // Subscribe to bonus products changes
+    const bonusProductsSubscription = supabase
+      .channel('')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: '',
+          filter: `user_id=eq.${user.id}`
+        }, 
+        (payload) => {
+          () => {}(payload);
+        }
+      )
+      .subscribe();
+
     setRealtimeSubscriptions([
-      personalListsSubscription
+      personalListsSubscription,
+      bonusProductsSubscription
     ]);
   };
 
@@ -249,7 +274,9 @@ export default function GroceryListScreen() {
     setRealtimeSubscriptions([]);
   };
 
-  // Handle real-time updates
+
+
+  // Handle real-time updates for lists
   const handleRealtimeUpdate = (payload) => {
     console.log('handleRealtimeUpdate: Processing update:', payload);
     
@@ -284,6 +311,14 @@ export default function GroceryListScreen() {
         console.log('Real-time: Updated selected list with', updatedList.items?.length || 0, 'items');
       }
     }
+  };
+
+  // Handle real-time updates for bonus products
+  const handleBonusRealtimeUpdate = (payload) => {
+    console.log('', payload);
+    
+    // Reload bonus data when there are changes
+    ;
   };
 
   // Laad lijsten uit Supabase
@@ -326,6 +361,123 @@ export default function GroceryListScreen() {
       setLijsten([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Laad bonus data
+  const loadBonusData = async () => {
+    try {
+      if (!user) return;
+      
+      console.log('', user.id);
+      const { data, error } = await 
+      if (error) {
+        console.error('', error);
+        return;
+      }
+      
+      
+      
+      // Als er geen bonus data is, importeer automatisch
+      if (!data || data.length === 0) {
+        console.log('');
+        try {
+          const result = await 
+          if (result && result.success) {
+            console.log('Bonus data automatisch geïmporteerd');
+            // Herlaad de data na import
+            const { data: newData, error: newError } = await 
+            if (!newError) {
+              
+              () => {}(newData || []);
+              // Debug bonus data na het laden
+              ;
+            }
+          } else {
+            console.log('Auto-import result:', result);
+            () => {}([]);
+          }
+        } catch (importError) {
+          console.error('', importError);
+          () => {}([]);
+        }
+      } else {
+        () => {}(data);
+        // Debug bonus data na het laden
+        ;
+      }
+    } catch (error) {
+      console.error('', error);
+    }
+  };
+
+  // Auto-import bonus data
+  const handleAutoImportBonus = async () => {
+    try {
+      if (!user) return;
+      
+      const result = await 
+      if (result && result.success) {
+        Alert.alert(
+          'Bonus Data Geïmporteerd!',
+          `${result.count} bonus producten zijn automatisch geïmporteerd. Je zult nu bonus badges zien naast producten die in de bonus zijn.`
+        );
+        // Reload bonus data
+        ;
+      } else {
+        console.log('Auto-import failed:', result);
+        Alert.alert('');
+      }
+    } catch (error) {
+      console.error('', error);
+      Alert.alert('');
+    }
+  };
+
+  // Debug functie om bonus data te controleren
+  const debugBonusData = async () => {
+    try {
+      if (!user) return;
+      
+      console.log('=== DEBUG BONUS DATA ===');
+      
+      // Check hoeveel bonus producten er in de database staan
+      const { data: dbData, error: dbError } = await 
+      if (dbError) {
+        console.error('', dbError);
+        return;
+      }
+      
+      console.log(`Bonus products in database: ${dbData?.length || 0}`);
+      
+      // Check hoeveel fruit producten er zijn
+      const fruitProducts = dbData?.filter(product => product.category === 'Fruit') || [];
+      console.log(`Fruit products in database: ${fruitProducts.length}`);
+      
+      // Log alle fruit producten
+      fruitProducts.forEach((product, index) => {
+        
+      });
+      
+      // Check hoeveel groente producten er zijn
+      const groenteProducts = dbData?.filter(product => product.category === 'Groente') || [];
+      console.log(`Groente products in database: ${groenteProducts.length}`);
+      
+      // Check specifiek voor druiven en aardbeien
+      const druivenProducts = dbData?.filter(product => 
+        product.name.toLowerCase().includes('druif')
+      ) || [];
+      const aardbeienProducts = dbData?.filter(product => 
+        product.name.toLowerCase().includes('aardbei')
+      ) || [];
+      
+      console.log(`Druiven products: ${druivenProducts.length}`);
+      console.log(`Aardbeien products: ${aardbeienProducts.length}`);
+      
+      console.log('=== END DEBUG ===');
+      
+    } catch (error) {
+      console.error('Error in debugBonusData:', error);
     }
   };
 
@@ -866,9 +1018,9 @@ export default function GroceryListScreen() {
       await notificationTriggers.trackUserActivity();
       
       // Toon success bericht
-      Alert.alert('Toegevoegd!', `${aantalProducten} product${aantalProducten !== 1 ? 'en' : ''} toegevoegd aan je lijst!`);
+      showCustomAlert('Toegevoegd!', `${aantalProducten} product${aantalProducten !== 1 ? 'en' : ''} toegevoegd aan je lijst!`, 'success');
     } else {
-      Alert.alert('Fout', 'Kon producten niet toevoegen');
+      showCustomAlert('Fout', 'Kon producten niet toevoegen', 'error');
     }
   };
 
@@ -1225,6 +1377,9 @@ export default function GroceryListScreen() {
       );
     }
     
+    // Find matching bonus for this product
+    const null = 
+    
     // Render normaal product
     return (
       <View style={[styles.productRow, item.checked && styles.productRowChecked]}>
@@ -1239,9 +1394,14 @@ export default function GroceryListScreen() {
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.productInfo} onPress={() => handleProductDetails(item)}>
-          <Text style={[styles.productNaam, item.checked && styles.productNaamChecked, { color: colors.text }]}>
-            {item.naam}
-          </Text>
+          <View style={styles.productHeader}>
+            <Text style={[styles.productNaam, item.checked && styles.productNaamChecked, { color: colors.text }]}>
+              {item.naam}
+            </Text>
+            {null && (
+              
+            )}
+          </View>
           <Text style={[styles.productDetails, { color: colors.textSecondary }]}>
             {item.hoeveelheid} {item.eenheid}
           </Text>
@@ -1713,7 +1873,7 @@ export default function GroceryListScreen() {
                                 size={26} 
                                 color={isSelected ? '#4CAF50' : colors.textSecondary} 
                               />
-                              <View style={{ flex: 1 }}>
+                              <View style={{ flex: 1, position: 'relative' }}>
                                 <HighlightedText 
                                   text={item.naam}
                                   highlight={productZoek}
@@ -1724,6 +1884,13 @@ export default function GroceryListScreen() {
                                   showHighlight={showHighlighting}
                                   colors={colors}
                                 />
+                                {/* Bonus badge voor zoekresultaten */}
+                                {(() => {
+                                  const null = 
+                                  return null ? (
+                                    
+                                  ) : null;
+                                })()}
                               </View>
                               <Text style={{ fontSize: 12, color: colors.textSecondary, backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
                                 {item.categorie}
@@ -1811,10 +1978,19 @@ export default function GroceryListScreen() {
                             size={26} 
                             color={isSelected ? '#4CAF50' : colors.textSecondary} 
                           />
-                          <Text style={[styles.productOptionText, { 
-                            color: colors.text,
-                            fontWeight: isSelected ? 'bold' : 'normal'
-                          }]}>{item}</Text>
+                          <View style={{ flex: 1, position: 'relative' }}>
+                            <Text style={[styles.productOptionText, { 
+                              color: colors.text,
+                              fontWeight: isSelected ? 'bold' : 'normal'
+                            }]}>{item}</Text>
+                            {/* Bonus badge voor categorie producten */}
+                            {(() => {
+                              const null = 
+                              return null ? (
+                                
+                              ) : null;
+                            })()}
+                          </View>
                         </TouchableOpacity>
                       );
                     }}
@@ -2302,6 +2478,136 @@ export default function GroceryListScreen() {
         </TouchableOpacity>
       </Modal>
 
+      {/* Bonus Info Modal */}
+      <Modal
+        visible={false}
+        transparent
+        animationType="fade"
+        onRequestClose={() => () => {}(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { 
+            backgroundColor: colors.surface, 
+            borderRadius: 16,
+            margin: 20,
+            padding: 24,
+            maxWidth: '90%',
+            alignItems: 'center'
+          }]}>
+            <View style={{ 
+              backgroundColor: '#FF8C00', 
+              borderRadius: 50, 
+              width: 80, 
+              height: 80, 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              marginBottom: 20
+            }}>
+              <MaterialCommunityIcons name="tag" size={40} color="white" />
+            </View>
+            
+            <Text style={{ 
+              fontSize: 24, 
+              fontWeight: 'bold', 
+              color: colors.text, 
+              textAlign: 'center', 
+              marginBottom: 8 
+            }}>
+              {null?.name}
+            </Text>
+            
+            <Text style={{ 
+              fontSize: 16, 
+              color: colors.textSecondary, 
+              textAlign: 'center', 
+              marginBottom: 8 
+            }}>
+              {null?.store}
+            </Text>
+            
+            {}
+            <View style={{ 
+              backgroundColor: '#FF8C00', 
+              borderRadius: 20, 
+              paddingHorizontal: 20, 
+              paddingVertical: 12,
+              marginBottom: 16,
+              minWidth: 200,
+              alignItems: 'center'
+            }}>
+              <Text style={{ 
+                fontSize: 18, 
+                fontWeight: 'bold', 
+                color: 'white', 
+                textAlign: 'center',
+                textTransform: 'uppercase'
+              }}>
+                {null?.bonus_description || ''}
+              </Text>
+            </View>
+            
+            {null?.price && (
+              <View style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                marginBottom: 12 
+              }}>
+                <Text style={{ 
+                  fontSize: 20, 
+                  fontWeight: 'bold', 
+                  color: colors.success 
+                }}>
+                  €{null.price.toFixed(2)}
+                </Text>
+                {null.original_price && null.original_price !== null.price && (
+                  <Text style={{ 
+                    fontSize: 16, 
+                    color: colors.textSecondary, 
+                    textDecorationLine: 'line-through',
+                    marginLeft: 8
+                  }}>
+                    €{null.original_price.toFixed(2)}
+                  </Text>
+                )}
+              </View>
+            )}
+            
+            {}
+            {(!null?.bonus_description || null?.bonus_description === '') && (
+              <Text style={{ 
+                fontSize: 12, 
+                color: colors.textSecondary, 
+                textAlign: 'center', 
+                marginBottom: 16,
+                opacity: 0.7
+              }}>
+                Voor de exacte bonus kijk op ah.nl/bonus
+              </Text>
+            )}
+            
+            <TouchableOpacity 
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 14,
+                paddingHorizontal: 32,
+                alignItems: 'center',
+                width: '100%'
+              }}
+              onPress={() => () => {}(false)}
+            >
+              <Text style={{ 
+                fontSize: 16, 
+                fontWeight: 'bold', 
+                color: colors.buttonText 
+              }}>
+                Sluiten
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {selectMode && selectedListIds.length > 0 && (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 24, alignItems: 'center', zIndex: 10 }}>
           <TouchableOpacity
@@ -2324,6 +2630,8 @@ export default function GroceryListScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+
     </SafeAreaView>
   );
 }
@@ -2401,9 +2709,17 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
   },
+  productHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
   productNaam: {
     fontSize: 16,
     fontWeight: 'bold',
+    flex: 1,
+    marginRight: 8,
   },
   productNaamChecked: {
     textDecorationLine: 'line-through',

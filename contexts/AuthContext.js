@@ -75,8 +75,9 @@ export const AuthProvider = ({ children }) => {
         
         // Check voor refresh token errors
         if (error && (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found'))) {
-          console.log('DEBUG: Ongeldige refresh token gedetecteerd, schoon auth data op');
-          await clearAuthData();
+          console.log('DEBUG: Ongeldige refresh token gedetecteerd, zet user op null');
+          setUser(null);
+          setAutoLoginActive(false);
           return;
         }
         
@@ -190,25 +191,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const clearAuthData = async () => {
-    try {
-      console.log('DEBUG: Clearing auth data...');
-      setUser(null);
-      setAutoLoginActive(false);
-      
-      // Probeer uit te loggen bij Supabase om refresh tokens op te schonen
-      await supabase.auth.signOut();
-      console.log('DEBUG: Auth data cleared successfully');
-      return { success: true };
-    } catch (error) {
-      console.log('DEBUG: Error clearing auth data:', error);
-      // Zet user state op null zelfs als signOut faalt
-      setUser(null);
-      setAutoLoginActive(false);
-      return { success: true };
-    }
-  };
-
   const signOut = async () => {
     try {
       console.log('DEBUG: Attempting sign out...');
@@ -270,7 +252,6 @@ export const AuthProvider = ({ children }) => {
     signOut,
     updateUserContext,
     autoLoginActive,
-    clearAuthData,
   };
 
   return (
